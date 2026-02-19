@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import { getEnv } from "@/lib/config/env";
 import type { UserRole } from "@/types/auth";
+import type { SignOptions } from "jsonwebtoken";
 
 export interface TokenPayload {
     userId: string;
@@ -10,7 +11,8 @@ export interface TokenPayload {
 
 export function signToken(payload: TokenPayload) {
     const { JWT_SECRET, JWT_EXPIRES_IN } = getEnv();
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    const expiresIn = JWT_EXPIRES_IN as SignOptions["expiresIn"];
+    return jwt.sign(payload, JWT_SECRET, { expiresIn });
 }
 
 export function verifyToken(token: string): TokenPayload {
