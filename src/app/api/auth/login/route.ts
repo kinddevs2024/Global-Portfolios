@@ -6,6 +6,7 @@ import {
     getBackendApiUrl,
     parseBackendErrorMessage,
 } from "@/lib/auth/backendAuth";
+import { loginUser } from "@/server/services/auth.service";
 
 const loginSchema = z.object({
     email: z.string().email(),
@@ -30,12 +31,47 @@ function formatLoginValidationError(error: z.ZodError) {
 export async function POST(request: Request) {
     try {
         const body = loginSchema.parse(await request.json());
-        const backendResponse = await fetch(getBackendApiUrl("/auth/login"), {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-            cache: "no-store",
-        });
+        let backendResponse: Response;
+
+        try {
+            backendResponse = await fetch(getBackendApiUrl("/auth/login"), {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+                cache: "no-store",
+            });
+        } catch (networkError) {
+            if (!(networkError instanceof TypeError)) {
+                throw networkError;
+            }
+
+            const { user, token } = await loginUser(body.email, body.password);
+            const fallbackResponse = NextResponse.json({
+                user: {
+                    id: user._id.toString(),
+                    email: user.email,
+                    role: user.role,
+                },
+            });
+
+            fallbackResponse.cookies.set(AUTH_TOKEN_COOKIE, token, {
+                httpOnly: true,
+                sameSite: "lax",
+                secure: process.env.NODE_ENV === "production",
+                path: "/",
+                maxAge: 60 * 60 * 24 * 7,
+            });
+
+            fallbackResponse.cookies.set(AUTH_REFRESH_TOKEN_COOKIE, "", {
+                httpOnly: true,
+                sameSite: "lax",
+                secure: process.env.NODE_ENV === "production",
+                path: "/",
+                maxAge: 0,
+            });
+
+            return fallbackResponse;
+        }
 
         if (!backendResponse.ok) {
             const message = await parseBackendErrorMessage(backendResponse, "Неверный email или пароль");
@@ -76,6 +112,10 @@ export async function POST(request: Request) {
     } catch (error) {
         if (error instanceof z.ZodError) {
             return NextResponse.json({ error: formatLoginValidationError(error) }, { status: 400 });
+        }
+
+        if (error instanceof Error && error.message === "Invalid credentials") {
+            return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
         }
 
         console.error("[AUTH_LOGIN_ERROR]", error instanceof Error ? error.message : error);

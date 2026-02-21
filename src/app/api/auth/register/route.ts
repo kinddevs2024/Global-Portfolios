@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { AUTH_REFRESH_TOKEN_COOKIE, AUTH_TOKEN_COOKIE, getBackendApiBase, getBackendApiUrl } from "@/lib/auth/backendAuth";
+import { registerUser } from "@/server/services/auth.service";
 
 type RegisterBody = {
     email?: string;
@@ -94,17 +95,43 @@ export async function POST(request: Request) {
         }
 
         if (!backendResponse) {
-            console.error("[AUTH_REGISTER_BACKEND_UNREACHABLE]", {
+            console.warn("[AUTH_REGISTER_BACKEND_UNREACHABLE_FALLBACK_LOCAL]", {
                 backendRegisterCandidates,
                 lastNetworkError,
             });
 
-            return NextResponse.json(
-                {
-                    error: "Auth backend is unavailable. Set BACKEND_API_URL and ensure backend is running on port 4000",
-                },
-                { status: 502 },
-            );
+            try {
+                const { user, token } = await registerUser(email, password, role);
+                const response = NextResponse.json({
+                    user: {
+                        id: user._id.toString(),
+                        email: user.email,
+                        role: user.role,
+                    },
+                });
+
+                response.cookies.set(AUTH_TOKEN_COOKIE, token, {
+                    httpOnly: true,
+                    sameSite: "lax",
+                    secure: process.env.NODE_ENV === "production",
+                    path: "/",
+                    maxAge: 60 * 60 * 24 * 7,
+                });
+
+                response.cookies.set(AUTH_REFRESH_TOKEN_COOKIE, "", {
+                    httpOnly: true,
+                    sameSite: "lax",
+                    secure: process.env.NODE_ENV === "production",
+                    path: "/",
+                    maxAge: 0,
+                });
+
+                return response;
+            } catch (fallbackError) {
+                const fallbackMessage = fallbackError instanceof Error ? fallbackError.message : "Registration failed";
+                const fallbackStatus = fallbackMessage === "User already exists" ? 409 : 500;
+                return NextResponse.json({ error: fallbackMessage }, { status: fallbackStatus });
+            }
         }
 
         if (!backendResponse.ok) {

@@ -6,6 +6,8 @@ import {
     getBackendApiUrl,
     parseBackendErrorMessage,
 } from "@/lib/auth/backendAuth";
+import { verifyToken } from "@/lib/auth/jwt";
+import { getUserById } from "@/server/services/auth.service";
 
 type BackendUser = {
     _id: string;
@@ -32,6 +34,24 @@ export async function GET() {
 
         if (!token) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        try {
+            const localPayload = verifyToken(token);
+            const localUser = await getUserById(localPayload.userId);
+
+            if (localUser) {
+                return NextResponse.json({
+                    data: {
+                        _id: String(localUser._id),
+                        email: localUser.email,
+                        role: localUser.role,
+                        verificationStatus: localUser.verificationStatus,
+                    },
+                });
+            }
+        } catch {
+            // token may belong to external backend, continue with backend /auth/me flow
         }
 
         let meResponse = await fetchMeByAccessToken(token);
