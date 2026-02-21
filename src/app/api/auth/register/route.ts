@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { AUTH_REFRESH_TOKEN_COOKIE, AUTH_TOKEN_COOKIE, getBackendApiUrl } from "@/lib/auth/backendAuth";
+import { AUTH_REFRESH_TOKEN_COOKIE, AUTH_TOKEN_COOKIE, getBackendApiBase, getBackendApiUrl } from "@/lib/auth/backendAuth";
 
 type RegisterBody = {
     email?: string;
@@ -20,8 +20,31 @@ async function safeReadError(response: Response, fallback: string) {
     }
 }
 
+function getBackendRegisterUrlCandidates(request: Request) {
+    const normalizedConfiguredBase = getBackendApiBase().replace(/\/$/, "");
+    const configuredUrl = `${normalizedConfiguredBase}/auth/register`;
+
+    const candidates = new Set<string>([
+        configuredUrl,
+        "http://127.0.0.1:4000/api/auth/register",
+        "http://localhost:4000/api/auth/register",
+    ]);
+
+    try {
+        const hostname = new URL(request.url).hostname;
+        if (hostname && hostname !== "localhost" && hostname !== "127.0.0.1") {
+            candidates.add(`http://${hostname}:4000/api/auth/register`);
+        }
+    } catch {
+        // ignore URL parse issues
+    }
+
+    return Array.from(candidates);
+}
+
 export async function POST(request: Request) {
     const backendRegisterUrl = getBackendApiUrl("/auth/register");
+    const backendRegisterCandidates = getBackendRegisterUrlCandidates(request);
 
     try {
         const body = (await request.json()) as RegisterBody;
@@ -41,16 +64,48 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Please select a valid account role" }, { status: 400 });
         }
 
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 15000);
+        let backendResponse: Response | null = null;
+        let lastNetworkError: string | null = null;
 
-        const backendResponse = await fetch(backendRegisterUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password, role }),
-            cache: "no-store",
-            signal: controller.signal,
-        }).finally(() => clearTimeout(timeout));
+        for (const candidateUrl of backendRegisterCandidates) {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 15000);
+
+            try {
+                const response = await fetch(candidateUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password, role }),
+                    cache: "no-store",
+                    signal: controller.signal,
+                });
+
+                backendResponse = response;
+                break;
+            } catch (candidateError) {
+                if (candidateError instanceof Error && candidateError.name === "AbortError") {
+                    lastNetworkError = `Timeout while calling ${candidateUrl}`;
+                } else {
+                    lastNetworkError = candidateError instanceof Error ? candidateError.message : "Unknown network error";
+                }
+            } finally {
+                clearTimeout(timeout);
+            }
+        }
+
+        if (!backendResponse) {
+            console.error("[AUTH_REGISTER_BACKEND_UNREACHABLE]", {
+                backendRegisterCandidates,
+                lastNetworkError,
+            });
+
+            return NextResponse.json(
+                {
+                    error: "Auth backend is unavailable. Set BACKEND_API_URL and ensure backend is running on port 4000",
+                },
+                { status: 502 },
+            );
+        }
 
         if (!backendResponse.ok) {
             const message = await safeReadError(backendResponse, "Registration failed. Please try again");
@@ -96,6 +151,7 @@ export async function POST(request: Request) {
         if (error instanceof TypeError) {
             console.error("[AUTH_REGISTER_BACKEND_UNREACHABLE]", {
                 backendRegisterUrl,
+                backendRegisterCandidates,
                 message: error.message,
             });
 
