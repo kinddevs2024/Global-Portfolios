@@ -3,6 +3,12 @@
 export default function LogoutButton() {
     async function handleLogout() {
         await fetch("/api/auth/logout", { method: "POST" });
+        try {
+            localStorage.clear();
+            sessionStorage.clear();
+        } catch {
+            // ignore storage cleanup errors
+        }
         window.location.assign("/");
     }
 

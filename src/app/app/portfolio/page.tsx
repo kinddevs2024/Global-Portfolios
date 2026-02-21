@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 type Education = {
@@ -176,8 +176,39 @@ function getMissingFields(form: PortfolioState): MissingField[] {
     return missing;
 }
 
+function buildProfilePayload(form: PortfolioState) {
+    const firstEducation = form.education[0];
+    const project = form.projects[0];
+    const hardSkillNames = form.hardSkills.map((item) => item.name.trim()).filter(Boolean);
+    const technologies = (project?.technologies ?? "").split(",").map((item) => item.trim()).filter(Boolean);
+
+    return {
+        firstName: form.firstName || "Student",
+        lastName: form.lastName || "Profile",
+        country: form.country || "Unknown",
+        age: calculateAge(form.dateOfBirth),
+        language: form.languages[0]?.name || "English",
+        gpa: Number(firstEducation?.gpa || 3),
+        examResults: [],
+        recommendationLetters: form.recommendations.map((item) => item.organization).filter(Boolean),
+        skills: hardSkillNames,
+        technologies,
+        projectName: project?.title || "Main Project",
+        projectComplexity: 40,
+        projectUsers: 0,
+        academicScore: 70,
+        olympiadScore: 0,
+        projectScore: 30,
+        skillsScore: Math.min(80, hardSkillNames.length * 10),
+        activityScore: 20,
+        aiPotentialScore: 40,
+        hasGrant: form.scholarshipNeeded,
+    };
+}
+
 export default function PortfolioPage() {
     const searchParams = useSearchParams();
+    const autoSyncAttemptedRef = useRef(false);
     const [step, setStep] = useState(1);
     const [form, setForm] = useState<PortfolioState>(defaultState);
     const [status, setStatus] = useState("");
@@ -192,10 +223,12 @@ export default function PortfolioPage() {
     }, [searchParams]);
 
     useEffect(() => {
+        let parsedDraft: PortfolioState | null = null;
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
             try {
                 const parsed = JSON.parse(raw) as PortfolioState;
+                parsedDraft = parsed;
                 setForm((current) => ({ ...current, ...parsed }));
             } catch {
                 localStorage.removeItem(STORAGE_KEY);
@@ -203,14 +236,17 @@ export default function PortfolioPage() {
         }
 
         async function loadPlatformData() {
+            let emailFromAuth = "";
             const [meRes, profileRes] = await Promise.all([fetch("/api/auth/me"), fetch("/api/profile")]);
             if (meRes.ok) {
                 const payload = (await meRes.json()) as { data?: { email?: string } };
                 if (payload.data?.email) {
+                    emailFromAuth = payload.data.email;
                     setForm((current) => ({ ...current, email: payload.data?.email ?? current.email }));
                 }
             }
 
+            let hasBackendProfile = false;
             if (profileRes.ok) {
                 const payload = (await profileRes.json()) as {
                     data?: {
@@ -223,6 +259,7 @@ export default function PortfolioPage() {
 
                 const profile = payload.data;
                 if (!profile) return;
+                hasBackendProfile = true;
 
                 setForm((current) => ({
                     ...current,
@@ -254,6 +291,28 @@ export default function PortfolioPage() {
                             : current.education,
                 }));
             }
+
+            if (!hasBackendProfile && parsedDraft && !autoSyncAttemptedRef.current) {
+                autoSyncAttemptedRef.current = true;
+
+                const draftToSync = emailFromAuth
+                    ? { ...parsedDraft, email: emailFromAuth }
+                    : parsedDraft;
+
+                try {
+                    const response = await fetch("/api/profile", {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(buildProfilePayload(draftToSync)),
+                    });
+
+                    if (response.ok) {
+                        setStatus("Черновик портфолио автоматически пересохранен в профиль.");
+                    }
+                } catch {
+                    // ignore auto-sync failures
+                }
+            }
         }
 
         void loadPlatformData();
@@ -275,34 +334,7 @@ export default function PortfolioPage() {
         setSaving(true);
         setStatus("Сохранение...");
 
-        const firstEducation = form.education[0];
-        const project = form.projects[0];
-        const hardSkillNames = form.hardSkills.map((item) => item.name.trim()).filter(Boolean);
-        const technologies = (project?.technologies ?? "").split(",").map((item) => item.trim()).filter(Boolean);
-        const age = calculateAge(form.dateOfBirth);
-
-        const payload = {
-            firstName: form.firstName || "Student",
-            lastName: form.lastName || "Profile",
-            country: form.country || "Unknown",
-            age,
-            language: form.languages[0]?.name || "English",
-            gpa: Number(firstEducation?.gpa || 3),
-            examResults: [],
-            recommendationLetters: form.recommendations.map((item) => item.organization).filter(Boolean),
-            skills: hardSkillNames,
-            technologies,
-            projectName: project?.title || "Main Project",
-            projectComplexity: 40,
-            projectUsers: 0,
-            academicScore: 70,
-            olympiadScore: 0,
-            projectScore: 30,
-            skillsScore: Math.min(80, hardSkillNames.length * 10),
-            activityScore: 20,
-            aiPotentialScore: 40,
-            hasGrant: form.scholarshipNeeded,
-        };
+        const payload = buildProfilePayload(form);
 
         try {
             const response = await fetch("/api/profile", {

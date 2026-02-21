@@ -7,6 +7,21 @@
   --primary-foreground: #ffffff;
   --muted: #ecfdf3;
   --border: #d1fae5;
+  --surface: #ffffff;
+  --surface-soft: #f3f7f3;
+  --text-muted: #6b7280;
+}
+
+[data-theme="dark"] {
+  --background: #0b1110;
+  --foreground: #e5e7eb;
+  --primary: #22c55e;
+  --primary-foreground: #052e16;
+  --muted: #0f1f1a;
+  --border: #214337;
+  --surface: #101918;
+  --surface-soft: #0d1514;
+  --text-muted: #9ca3af;
 }
 
 @theme inline {
@@ -24,7 +39,7 @@ body {
 
 .card {
   border: 1px solid var(--border);
-  background: #ffffff;
+  background: var(--surface);
   border-radius: 1rem;
 }
 

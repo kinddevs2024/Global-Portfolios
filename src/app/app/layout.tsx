@@ -42,6 +42,9 @@ export default async function PlatformLayout({ children }: { children: React.Rea
                         <Link className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-emerald-50" href="/app/portfolio">
                             Портфолио
                         </Link>
+                        <Link className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-emerald-50" href="/app/profile">
+                            Профиль
+                        </Link>
                         <Link className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-emerald-50" href="/app/applications">
                             Подать заявки
                         </Link>

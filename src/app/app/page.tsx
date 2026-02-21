@@ -249,6 +249,34 @@ export default function AppHomePage() {
                 <p className="mt-3 text-sm text-gray-700">Здесь вы видите новые заявки, письма, рейтинг, навыки и персональные рекомендации.</p>
             </section>
 
+            {profileCompletion < 100 ? (
+                <section className="card p-5">
+                    <h2 className="text-lg font-semibold">Можно дополнить профиль</h2>
+                    <p className="mt-2 text-sm text-gray-600">Заполнено: {profileCompletion}%. Для 100% дополните оставшиеся разделы.</p>
+                    <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-emerald-100">
+                        <div className="h-full bg-emerald-600 transition-all duration-500 ease-out" style={{ width: `${profileCompletion}%` }} />
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                        {profileMissing.slice(0, 8).map((item) => (
+                            <span className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs text-amber-800" key={item}>
+                                {item}
+                            </span>
+                        ))}
+                        {profileMissing.length > 8 ? (
+                            <span className="rounded-full border border-gray-300 bg-gray-50 px-3 py-1 text-xs text-gray-600">+ еще {profileMissing.length - 8}</span>
+                        ) : null}
+                    </div>
+                    <Link className="mt-4 inline-flex rounded-lg bg-emerald-600 px-4 py-2 text-sm text-white" href={`/app/portfolio?step=${firstMissingStep}`}>
+                        Дополнить портфолио
+                    </Link>
+                </section>
+            ) : (
+                <section className="card p-5">
+                    <h2 className="text-lg font-semibold">Профиль заполнен</h2>
+                    <p className="mt-2 text-sm text-emerald-700">Отлично: у вас 100% заполнения портфолио.</p>
+                </section>
+            )}
+
             <section className="grid gap-4 md:grid-cols-4">
                 <article className="card p-4"><p className="text-xs text-gray-500">Новые приглашения</p><p className="text-2xl font-bold">{incomingInvites}</p></article>
                 <article className="card p-4"><p className="text-xs text-gray-500">Активные заявки</p><p className="text-2xl font-bold">{pendingApplications}</p></article>
@@ -291,33 +319,6 @@ export default function AppHomePage() {
                 </Link>
             </section>
 
-            {profileCompletion < 100 ? (
-                <section className="card p-5">
-                    <h2 className="text-lg font-semibold">Можно дополнить профиль</h2>
-                    <p className="mt-2 text-sm text-gray-600">Заполнено: {profileCompletion}%. Для 100% дополните оставшиеся разделы.</p>
-                    <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-emerald-100">
-                        <div className="h-full bg-emerald-600 transition-all duration-500 ease-out" style={{ width: `${profileCompletion}%` }} />
-                    </div>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                        {profileMissing.slice(0, 8).map((item) => (
-                            <span className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs text-amber-800" key={item}>
-                                {item}
-                            </span>
-                        ))}
-                        {profileMissing.length > 8 ? (
-                            <span className="rounded-full border border-gray-300 bg-gray-50 px-3 py-1 text-xs text-gray-600">+ еще {profileMissing.length - 8}</span>
-                        ) : null}
-                    </div>
-                    <Link className="mt-4 inline-flex rounded-lg bg-emerald-600 px-4 py-2 text-sm text-white" href={`/app/portfolio?step=${firstMissingStep}`}>
-                        Дополнить портфолио
-                    </Link>
-                </section>
-            ) : (
-                <section className="card p-5">
-                    <h2 className="text-lg font-semibold">Профиль заполнен</h2>
-                    <p className="mt-2 text-sm text-emerald-700">Отлично: у вас 100% заполнения портфолио.</p>
-                </section>
-            )}
         </div>
     );
 }

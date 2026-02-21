@@ -6,6 +6,11 @@ const userSchema = new Schema(
         passwordHash: { type: String, required: true },
         role: { type: String, enum: ["student", "university", "investor", "admin"], required: true },
         verificationStatus: { type: String, enum: ["pending", "verified", "rejected"], default: "pending" },
+        firstName: { type: String, default: "" },
+        lastName: { type: String, default: "" },
+        avatarUrl: { type: String, default: "" },
+        preferredLanguage: { type: String, default: "auto" },
+        themeMode: { type: String, enum: ["light", "dark", "system"], default: "system" },
     },
     { timestamps: true },
 );
