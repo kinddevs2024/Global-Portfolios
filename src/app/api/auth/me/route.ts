@@ -16,6 +16,13 @@ type BackendUser = {
     isVerified?: boolean;
 };
 
+type LocalUser = {
+    _id: unknown;
+    email?: string;
+    role?: string;
+    verificationStatus?: string;
+};
+
 async function fetchMeByAccessToken(token: string) {
     return fetch(getBackendApiUrl("/auth/me"), {
         method: "GET",
@@ -39,14 +46,17 @@ export async function GET() {
         try {
             const localPayload = verifyToken(token);
             const localUser = await getUserById(localPayload.userId);
+            const normalizedLocalUser = Array.isArray(localUser) ? localUser[0] : localUser;
 
-            if (localUser) {
+            if (normalizedLocalUser && typeof normalizedLocalUser === "object" && "_id" in normalizedLocalUser) {
+                const typedLocalUser = normalizedLocalUser as LocalUser;
+
                 return NextResponse.json({
                     data: {
-                        _id: String(localUser._id),
-                        email: localUser.email,
-                        role: localUser.role,
-                        verificationStatus: localUser.verificationStatus,
+                        _id: String(typedLocalUser._id),
+                        email: String(typedLocalUser.email ?? localPayload.email),
+                        role: typedLocalUser.role ?? localPayload.role,
+                        verificationStatus: typedLocalUser.verificationStatus ?? "pending",
                     },
                 });
             }
