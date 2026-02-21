@@ -631,13 +631,12 @@ export default function PortfolioPage() {
 
                 <div className="flex flex-wrap gap-3 pt-2">
                     <button className="rounded-lg border border-gray-300 px-4 py-2" onClick={() => setStep((current) => Math.max(1, current - 1))} type="button">Back</button>
-                    <button className="rounded-lg border border-gray-300 px-4 py-2" onClick={() => setStep((current) => Math.min(7, current + 1))} type="button">Next</button>
-                    <button className="rounded-lg border border-emerald-300 px-4 py-2" disabled={saving} onClick={() => void saveToPlatform()} type="button">Сохранить на сервер</button>
                     {step < 7 ? (
-                        <button className="rounded-lg bg-emerald-600 px-4 py-2 text-white disabled:opacity-70" disabled={saving} onClick={saveAndGoNext} type="button">{saving ? "Saving..." : "Сохранить и далее"}</button>
+                        <button className="rounded-lg border border-gray-300 px-4 py-2 disabled:opacity-70" disabled={saving} onClick={saveAndGoNext} type="button">{saving ? "Saving..." : "Далее"}</button>
                     ) : (
-                        <button className="rounded-lg bg-emerald-600 px-4 py-2 text-white disabled:opacity-70" disabled={saving} onClick={finishPortfolio} type="button">{saving ? "Saving..." : "Закончить"}</button>
+                        <button className="rounded-lg border border-gray-300 px-4 py-2 disabled:opacity-70" disabled={saving} onClick={finishPortfolio} type="button">{saving ? "Saving..." : "Завершить"}</button>
                     )}
+                    <button className="rounded-lg bg-emerald-600 px-4 py-2 text-white disabled:opacity-70" disabled={saving} onClick={() => void saveToPlatform()} type="button">{saving ? "Saving..." : "Сохранить"}</button>
                 </div>
                 {status ? <p className="text-sm text-gray-700">{status}</p> : null}
                 {showMissing && missingFields.length > 0 ? (
