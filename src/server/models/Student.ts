@@ -61,6 +61,7 @@ const studentSchema = new Schema(
             publications: { type: Number, default: 0 },
             engagementScore: { type: Number, default: 0 },
         },
+        portfolioData: { type: Schema.Types.Mixed, default: null },
         hasGrant: { type: Boolean, default: false, index: true },
     },
     { timestamps: true },

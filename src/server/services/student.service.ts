@@ -68,6 +68,7 @@ type ProfileInput = {
     activityScore: number;
     aiPotentialScore: number;
     hasGrant: boolean;
+    portfolioData?: Record<string, unknown>;
 };
 
 export async function upsertStudentProfile(userId: string, input: ProfileInput) {
@@ -126,6 +127,7 @@ export async function upsertStudentProfile(userId: string, input: ProfileInput) 
             publications: 0,
             engagementScore: input.activityScore,
         },
+        portfolioData: input.portfolioData ?? null,
         hasGrant: input.hasGrant,
     };
 

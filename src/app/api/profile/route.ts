@@ -30,6 +30,7 @@ const profileSchema = z.object({
     activityScore: z.number().min(0).max(50),
     aiPotentialScore: z.number().min(0).max(100),
     hasGrant: z.boolean().default(false),
+    portfolioData: z.record(z.string(), z.unknown()).optional(),
 });
 
 async function syncBackendStudentProfile(body: z.infer<typeof profileSchema>, request: Request) {

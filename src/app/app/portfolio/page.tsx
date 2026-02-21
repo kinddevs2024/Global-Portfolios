@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 
@@ -66,8 +66,6 @@ type PortfolioState = {
     preferredCountries: string;
     scholarshipNeeded: boolean;
 };
-
-const STORAGE_KEY = "gp:portfolio:v1";
 
 const defaultState: PortfolioState = {
     firstName: "",
@@ -230,7 +228,6 @@ function buildProfilePayload(form: PortfolioState) {
 
 export default function PortfolioPage() {
     const searchParams = useSearchParams();
-    const autoSyncAttemptedRef = useRef(false);
     const [step, setStep] = useState(1);
     const [form, setForm] = useState<PortfolioState>(defaultState);
     const [status, setStatus] = useState("");
@@ -245,33 +242,19 @@ export default function PortfolioPage() {
     }, [searchParams]);
 
     useEffect(() => {
-        let parsedDraft: PortfolioState | null = null;
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-            try {
-                const parsed = JSON.parse(raw) as PortfolioState;
-                parsedDraft = parsed;
-                setForm((current) => ({ ...current, ...parsed }));
-            } catch {
-                localStorage.removeItem(STORAGE_KEY);
-            }
-        }
-
         async function loadPlatformData() {
-            let emailFromAuth = "";
             const [meRes, profileRes] = await Promise.all([fetch("/api/auth/me"), fetch("/api/profile")]);
             if (meRes.ok) {
                 const payload = (await meRes.json()) as { data?: { email?: string } };
                 if (payload.data?.email) {
-                    emailFromAuth = payload.data.email;
                     setForm((current) => ({ ...current, email: payload.data?.email ?? current.email }));
                 }
             }
 
-            let hasBackendProfile = false;
             if (profileRes.ok) {
                 const payload = (await profileRes.json()) as {
                     data?: {
+                        portfolioData?: PortfolioState;
                         personalInfo?: { firstName?: string; lastName?: string; country?: string; age?: number; language?: string };
                         academicInfo?: { gpa?: number };
                         skills?: Array<{ name?: string }>;
@@ -281,7 +264,16 @@ export default function PortfolioPage() {
 
                 const profile = payload.data;
                 if (!profile) return;
-                hasBackendProfile = true;
+
+                const serverPortfolio = profile.portfolioData;
+                if (serverPortfolio) {
+                    setForm((current) => ({
+                        ...current,
+                        ...serverPortfolio,
+                        email: current.email || serverPortfolio.email || "",
+                    }));
+                    return;
+                }
 
                 setForm((current) => ({
                     ...current,
@@ -317,28 +309,6 @@ export default function PortfolioPage() {
                             : current.education,
                 }));
             }
-
-            if (!hasBackendProfile && parsedDraft && !autoSyncAttemptedRef.current) {
-                autoSyncAttemptedRef.current = true;
-
-                const draftToSync = emailFromAuth
-                    ? { ...parsedDraft, email: emailFromAuth }
-                    : parsedDraft;
-
-                try {
-                    const response = await fetch("/api/profile", {
-                        method: "PUT",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(buildProfilePayload(draftToSync)),
-                    });
-
-                    if (response.ok) {
-                        setStatus("Черновик портфолио автоматически пересохранен в профиль.");
-                    }
-                } catch {
-                    // ignore auto-sync failures
-                }
-            }
         }
 
         void loadPlatformData();
@@ -352,7 +322,6 @@ export default function PortfolioPage() {
 
     function persistDraft(next: PortfolioState) {
         setForm(next);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
     }
 
     async function saveToPlatform() {
@@ -360,7 +329,10 @@ export default function PortfolioPage() {
         setSaving(true);
         setStatus("Сохранение...");
 
-        const payload = buildProfilePayload(form);
+        const payload = {
+            ...buildProfilePayload(form),
+            portfolioData: form,
+        };
 
         try {
             const response = await fetch("/api/profile", {
@@ -375,7 +347,6 @@ export default function PortfolioPage() {
                 return false;
             }
 
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(form));
             setStatus("Портфолио сохранено");
             return true;
         } catch {
@@ -661,7 +632,7 @@ export default function PortfolioPage() {
                 <div className="flex flex-wrap gap-3 pt-2">
                     <button className="rounded-lg border border-gray-300 px-4 py-2" onClick={() => setStep((current) => Math.max(1, current - 1))} type="button">Back</button>
                     <button className="rounded-lg border border-gray-300 px-4 py-2" onClick={() => setStep((current) => Math.min(7, current + 1))} type="button">Next</button>
-                    <button className="rounded-lg border border-emerald-300 px-4 py-2" onClick={() => localStorage.setItem(STORAGE_KEY, JSON.stringify(form))} type="button">Save Draft</button>
+                    <button className="rounded-lg border border-emerald-300 px-4 py-2" disabled={saving} onClick={() => void saveToPlatform()} type="button">Сохранить на сервер</button>
                     {step < 7 ? (
                         <button className="rounded-lg bg-emerald-600 px-4 py-2 text-white disabled:opacity-70" disabled={saving} onClick={saveAndGoNext} type="button">{saving ? "Saving..." : "Сохранить и далее"}</button>
                     ) : (

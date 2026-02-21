@@ -11,6 +11,29 @@ type StudentProfile = {
     globalScore?: number;
     skills?: Array<{ name?: string }>;
     aiAnalysis?: { recommendation?: string };
+    portfolioData?: {
+        firstName?: string;
+        lastName?: string;
+        dateOfBirth?: string;
+        nationality?: string;
+        country?: string;
+        city?: string;
+        phoneNumber?: string;
+        email?: string;
+        passportNumber?: string;
+        profilePhoto?: string;
+        education?: Array<{ institutionName?: string; fieldOfStudy?: string; gpa?: string }>;
+        languages?: Array<{ name?: string; level?: string }>;
+        hardSkills?: Array<{ name?: string }>;
+        softSkills?: Array<{ name?: string }>;
+        certifications?: Array<{ name?: string; organization?: string }>;
+        internships?: Array<{ companyName?: string; position?: string }>;
+        projects?: Array<{ title?: string; description?: string }>;
+        awards?: Array<{ title?: string; organization?: string }>;
+        personalStatement?: string;
+        careerGoals?: string;
+        preferredFields?: string;
+    };
 };
 
 function hasText(value: unknown) {
@@ -68,8 +91,8 @@ function getStepForMissingLabel(label: string) {
     return 1;
 }
 
-function computeCompletionFromDraft(rawDraft: string | null) {
-    if (!rawDraft) {
+function computeCompletionFromPortfolio(draft: StudentProfile["portfolioData"] | null | undefined) {
+    if (!draft) {
         return {
             completion: 0,
             missing: [
@@ -97,30 +120,6 @@ function computeCompletionFromDraft(rawDraft: string | null) {
     }
 
     try {
-        const draft = JSON.parse(rawDraft) as {
-            firstName?: string;
-            lastName?: string;
-            dateOfBirth?: string;
-            nationality?: string;
-            country?: string;
-            city?: string;
-            phoneNumber?: string;
-            email?: string;
-            passportNumber?: string;
-            profilePhoto?: string;
-            education?: Array<{ institutionName?: string; fieldOfStudy?: string; gpa?: string }>;
-            languages?: Array<{ name?: string; level?: string }>;
-            hardSkills?: Array<{ name?: string }>;
-            softSkills?: Array<{ name?: string }>;
-            certifications?: Array<{ name?: string; organization?: string }>;
-            internships?: Array<{ companyName?: string; position?: string }>;
-            projects?: Array<{ title?: string; description?: string }>;
-            awards?: Array<{ title?: string; organization?: string }>;
-            personalStatement?: string;
-            careerGoals?: string;
-            preferredFields?: string;
-        };
-
         const missing: string[] = [];
 
         if (!hasText(draft.firstName)) missing.push("First Name");
@@ -207,13 +206,16 @@ export default function AppHomePage() {
 
                 if (profileRes.ok) {
                     const payload = (await profileRes.json()) as { data?: StudentProfile };
-                    setProfile(payload.data ?? null);
+                    const profileData = payload.data ?? null;
+                    setProfile(profileData);
+                    const computed = computeCompletionFromPortfolio(profileData?.portfolioData);
+                    setProfileCompletion(computed.completion);
+                    setProfileMissing(computed.missing);
+                } else {
+                    const computed = computeCompletionFromPortfolio(null);
+                    setProfileCompletion(computed.completion);
+                    setProfileMissing(computed.missing);
                 }
-
-                const draftRaw = window.localStorage.getItem("gp:portfolio:v1");
-                const computed = computeCompletionFromDraft(draftRaw);
-                setProfileCompletion(computed.completion);
-                setProfileMissing(computed.missing);
             } catch {
                 window.location.assign("/auth/login");
             } finally {
