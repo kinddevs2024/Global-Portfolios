@@ -20,3 +20,29 @@ export async function parseBackendErrorMessage(response: Response, fallback: str
         return fallback;
     }
 }
+
+function parseBooleanEnv(value: string | undefined) {
+    if (!value) return undefined;
+    const normalized = value.trim().toLowerCase();
+    if (["1", "true", "yes", "on"].includes(normalized)) return true;
+    if (["0", "false", "no", "off"].includes(normalized)) return false;
+    return undefined;
+}
+
+export function shouldUseSecureAuthCookies(request: Request) {
+    const forced = parseBooleanEnv(process.env.AUTH_COOKIE_SECURE);
+    if (typeof forced === "boolean") {
+        return forced;
+    }
+
+    const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim().toLowerCase();
+    if (forwardedProto) {
+        return forwardedProto === "https";
+    }
+
+    try {
+        return new URL(request.url).protocol === "https:";
+    } catch {
+        return process.env.NODE_ENV === "production";
+    }
+}

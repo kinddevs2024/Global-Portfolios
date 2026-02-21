@@ -5,6 +5,7 @@ import {
     AUTH_TOKEN_COOKIE,
     getBackendApiUrl,
     parseBackendErrorMessage,
+    shouldUseSecureAuthCookies,
 } from "@/lib/auth/backendAuth";
 import { loginUser } from "@/server/services/auth.service";
 
@@ -30,6 +31,7 @@ function formatLoginValidationError(error: z.ZodError) {
 
 export async function POST(request: Request) {
     try {
+        const secureCookies = shouldUseSecureAuthCookies(request);
         const body = loginSchema.parse(await request.json());
         let backendResponse: Response;
 
@@ -57,7 +59,7 @@ export async function POST(request: Request) {
             fallbackResponse.cookies.set(AUTH_TOKEN_COOKIE, token, {
                 httpOnly: true,
                 sameSite: "lax",
-                secure: process.env.NODE_ENV === "production",
+                secure: secureCookies,
                 path: "/",
                 maxAge: 60 * 60 * 24 * 7,
             });
@@ -65,7 +67,7 @@ export async function POST(request: Request) {
             fallbackResponse.cookies.set(AUTH_REFRESH_TOKEN_COOKIE, "", {
                 httpOnly: true,
                 sameSite: "lax",
-                secure: process.env.NODE_ENV === "production",
+                secure: secureCookies,
                 path: "/",
                 maxAge: 0,
             });
@@ -95,7 +97,7 @@ export async function POST(request: Request) {
         response.cookies.set(AUTH_TOKEN_COOKIE, result.token, {
             httpOnly: true,
             sameSite: "lax",
-            secure: process.env.NODE_ENV === "production",
+            secure: secureCookies,
             path: "/",
             maxAge: 60 * 60 * 24 * 7,
         });
@@ -103,7 +105,7 @@ export async function POST(request: Request) {
         response.cookies.set(AUTH_REFRESH_TOKEN_COOKIE, result.refreshToken, {
             httpOnly: true,
             sameSite: "lax",
-            secure: process.env.NODE_ENV === "production",
+            secure: secureCookies,
             path: "/",
             maxAge: 60 * 60 * 24 * 30,
         });

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { AUTH_REFRESH_TOKEN_COOKIE, AUTH_TOKEN_COOKIE, getBackendApiBase, getBackendApiUrl } from "@/lib/auth/backendAuth";
+import { AUTH_REFRESH_TOKEN_COOKIE, AUTH_TOKEN_COOKIE, getBackendApiBase, getBackendApiUrl, shouldUseSecureAuthCookies } from "@/lib/auth/backendAuth";
 import { registerUser } from "@/server/services/auth.service";
 
 type RegisterBody = {
@@ -46,6 +46,7 @@ function getBackendRegisterUrlCandidates(request: Request) {
 export async function POST(request: Request) {
     const backendRegisterUrl = getBackendApiUrl("/auth/register");
     const backendRegisterCandidates = getBackendRegisterUrlCandidates(request);
+    const secureCookies = shouldUseSecureAuthCookies(request);
 
     try {
         const body = (await request.json()) as RegisterBody;
@@ -113,7 +114,7 @@ export async function POST(request: Request) {
                 response.cookies.set(AUTH_TOKEN_COOKIE, token, {
                     httpOnly: true,
                     sameSite: "lax",
-                    secure: process.env.NODE_ENV === "production",
+                    secure: secureCookies,
                     path: "/",
                     maxAge: 60 * 60 * 24 * 7,
                 });
@@ -121,7 +122,7 @@ export async function POST(request: Request) {
                 response.cookies.set(AUTH_REFRESH_TOKEN_COOKIE, "", {
                     httpOnly: true,
                     sameSite: "lax",
-                    secure: process.env.NODE_ENV === "production",
+                    secure: secureCookies,
                     path: "/",
                     maxAge: 0,
                 });
@@ -156,7 +157,7 @@ export async function POST(request: Request) {
         response.cookies.set(AUTH_TOKEN_COOKIE, result.token, {
             httpOnly: true,
             sameSite: "lax",
-            secure: process.env.NODE_ENV === "production",
+            secure: secureCookies,
             path: "/",
             maxAge: 60 * 60 * 24 * 7,
         });
@@ -164,7 +165,7 @@ export async function POST(request: Request) {
         response.cookies.set(AUTH_REFRESH_TOKEN_COOKIE, result.refreshToken, {
             httpOnly: true,
             sameSite: "lax",
-            secure: process.env.NODE_ENV === "production",
+            secure: secureCookies,
             path: "/",
             maxAge: 60 * 60 * 24 * 30,
         });

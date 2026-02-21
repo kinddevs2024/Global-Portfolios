@@ -5,6 +5,7 @@ import {
     AUTH_TOKEN_COOKIE,
     getBackendApiUrl,
     parseBackendErrorMessage,
+    shouldUseSecureAuthCookies,
 } from "@/lib/auth/backendAuth";
 import { verifyToken } from "@/lib/auth/jwt";
 import { getUserById } from "@/server/services/auth.service";
@@ -33,8 +34,9 @@ async function fetchMeByAccessToken(token: string) {
     });
 }
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
+        const secureCookies = shouldUseSecureAuthCookies(request);
         const cookieStore = await cookies();
         const token = cookieStore.get(AUTH_TOKEN_COOKIE)?.value;
         const refreshToken = cookieStore.get(AUTH_REFRESH_TOKEN_COOKIE)?.value;
@@ -88,7 +90,7 @@ export async function GET() {
             unauthorizedResponse.cookies.set(AUTH_TOKEN_COOKIE, "", {
                 httpOnly: true,
                 sameSite: "lax",
-                secure: process.env.NODE_ENV === "production",
+                secure: secureCookies,
                 path: "/",
                 maxAge: 0,
             });
@@ -115,7 +117,7 @@ export async function GET() {
             response.cookies.set(AUTH_TOKEN_COOKIE, currentToken, {
                 httpOnly: true,
                 sameSite: "lax",
-                secure: process.env.NODE_ENV === "production",
+                secure: secureCookies,
                 path: "/",
                 maxAge: 60 * 60 * 24 * 7,
             });
