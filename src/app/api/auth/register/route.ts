@@ -28,15 +28,15 @@ export async function POST(request: Request) {
         const role = body.role;
 
         if (!email || !isValidEmail(email)) {
-            return NextResponse.json({ error: "Введите корректный email" }, { status: 400 });
+            return NextResponse.json({ error: "Please enter a valid email" }, { status: 400 });
         }
 
         if (password.length < 8) {
-            return NextResponse.json({ error: "Пароль должен содержать минимум 8 символов" }, { status: 400 });
+            return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
         }
 
         if (!role || !["student", "university", "admin"].includes(role)) {
-            return NextResponse.json({ error: "Выберите корректную роль аккаунта" }, { status: 400 });
+            return NextResponse.json({ error: "Please select a valid account role" }, { status: 400 });
         }
 
         const controller = new AbortController();
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
         }).finally(() => clearTimeout(timeout));
 
         if (!backendResponse.ok) {
-            const message = await safeReadError(backendResponse, "Не удалось зарегистрироваться. Попробуйте еще раз");
+            const message = await safeReadError(backendResponse, "Registration failed. Please try again");
             return NextResponse.json({ error: message }, { status: backendResponse.status });
         }
 
@@ -88,13 +88,13 @@ export async function POST(request: Request) {
         return response;
     } catch (error) {
         if (error instanceof Error && error.name === "AbortError") {
-            return NextResponse.json({ error: "Сервер долго отвечает. Попробуйте еще раз" }, { status: 504 });
+            return NextResponse.json({ error: "Server timeout. Please try again" }, { status: 504 });
         }
 
         console.error("[AUTH_REGISTER_ERROR]", error instanceof Error ? error.message : error);
 
         return NextResponse.json(
-            { error: "Не удалось зарегистрироваться. Попробуйте еще раз" },
+            { error: "Registration failed. Please try again" },
             { status: 500 },
         );
     }
