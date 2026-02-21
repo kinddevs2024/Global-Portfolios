@@ -4,8 +4,7 @@ import { useEffect, useRef } from "react";
 import { LANGUAGE_MAP } from "@/utils/languages-map";
 
 export const LANGUAGE_KEY = "gp_translate_language";
-export const AUTO_KEY = "gp_auto_translate";
-const TARGET_SELECTORS = ["main", "header", "footer"];
+const TARGET_SELECTORS = ["body"];
 const ATTR_KEY = "data-translate-attr";
 const CACHE = new Map<string, string>();
 
@@ -63,16 +62,16 @@ const detectUserLanguage = (): string => {
         languages?: readonly string[];
     };
 
-    if (navigator.language) {
-        const mapped = mapGoogleLocaleToLanguage(navigator.language);
-        if (mapped) return mapped;
-    }
-
     if (navigator.languages && navigator.languages.length > 0) {
         for (const lang of navigator.languages) {
             const mapped = mapGoogleLocaleToLanguage(lang);
             if (mapped) return mapped;
         }
+    }
+
+    if (navigator.language) {
+        const mapped = mapGoogleLocaleToLanguage(navigator.language);
+        if (mapped) return mapped;
     }
 
     if (navigatorAny.systemLanguage) {
@@ -202,10 +201,6 @@ export function AutoTranslator() {
 
     useEffect(() => {
         if (typeof window === "undefined") return;
-
-        const enabledRaw = localStorage.getItem(AUTO_KEY);
-        const enabled = enabledRaw === null ? true : enabledRaw === "true";
-        if (!enabled) return;
 
         const targetLanguage = (() => {
             const stored = localStorage.getItem(LANGUAGE_KEY);

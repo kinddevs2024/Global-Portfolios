@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { AUTO_KEY, LANGUAGE_KEY } from "@/components/auto-translator";
+import { LANGUAGE_KEY } from "@/components/auto-translator";
 import { THEME_KEY, type ThemeMode } from "@/components/theme-controller";
 
 type AccountPayload = {
@@ -37,7 +37,6 @@ export default function ProfilePage() {
     const [avatarUrl, setAvatarUrl] = useState("");
     const [email, setEmail] = useState("");
     const [preferredLanguage, setPreferredLanguage] = useState("auto");
-    const [autoTranslate, setAutoTranslate] = useState(true);
     const [themeMode, setThemeMode] = useState<ThemeMode>("system");
 
     const [currentPassword, setCurrentPassword] = useState("");
@@ -63,9 +62,6 @@ export default function ProfilePage() {
                 setEmail(account.email ?? "");
                 setPreferredLanguage(account.preferredLanguage ?? "auto");
                 setThemeMode((account.themeMode ?? "system") as ThemeMode);
-
-                const localAuto = localStorage.getItem(AUTO_KEY);
-                setAutoTranslate(localAuto === null ? true : localAuto === "true");
 
                 if (!localStorage.getItem(LANGUAGE_KEY) && account.preferredLanguage) {
                     localStorage.setItem(LANGUAGE_KEY, account.preferredLanguage);
@@ -120,7 +116,6 @@ export default function ProfilePage() {
             }
 
             localStorage.setItem(LANGUAGE_KEY, preferredLanguage);
-            localStorage.setItem(AUTO_KEY, String(autoTranslate));
             localStorage.setItem(THEME_KEY, themeMode);
             window.dispatchEvent(new Event("gp:language-change"));
             window.dispatchEvent(new Event("gp:theme-change"));
@@ -248,7 +243,7 @@ export default function ProfilePage() {
 
                     <div>
                         <h2 className="text-base font-semibold">Язык и перевод</h2>
-                        <div className="mt-3 grid gap-3 md:grid-cols-2">
+                        <div className="mt-3 max-w-sm">
                             <div>
                                 <label className="mb-1 block text-sm font-medium">Язык интерфейса</label>
                                 <select
@@ -266,16 +261,6 @@ export default function ProfilePage() {
                                     <option value="ar">العربية</option>
                                     <option value="zh-CN">中文(简体)</option>
                                 </select>
-                            </div>
-                            <div>
-                                <label className="mb-1 block text-sm font-medium">Перевод</label>
-                                <button
-                                    className="w-full rounded-xl border border-emerald-300 px-3 py-2 text-left"
-                                    onClick={() => setAutoTranslate((current) => !current)}
-                                    type="button"
-                                >
-                                    {autoTranslate ? "Включен" : "Выключен"}
-                                </button>
                             </div>
                         </div>
                     </div>

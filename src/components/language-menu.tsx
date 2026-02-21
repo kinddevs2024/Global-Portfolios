@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AUTO_KEY, LANGUAGE_KEY } from "@/components/auto-translator";
+import { LANGUAGE_KEY } from "@/components/auto-translator";
 
 const LANG_OPTIONS = [
     { value: "auto", label: "Auto" },
@@ -16,24 +16,10 @@ const LANG_OPTIONS = [
 ];
 
 export default function LanguageMenu() {
-    const [enabled, setEnabled] = useState(() => {
-        if (typeof window === "undefined") return true;
-        const storedEnabled = localStorage.getItem(AUTO_KEY);
-        return storedEnabled === null ? true : storedEnabled === "true";
-    });
-
     const [language, setLanguage] = useState(() => {
         if (typeof window === "undefined") return "auto";
         return localStorage.getItem(LANGUAGE_KEY) ?? "auto";
     });
-
-    function toggleEnabled() {
-        const next = !enabled;
-        setEnabled(next);
-        localStorage.setItem(AUTO_KEY, String(next));
-        window.dispatchEvent(new Event("gp:language-change"));
-        window.location.reload();
-    }
 
     function onChangeLanguage(next: string) {
         setLanguage(next);
@@ -53,13 +39,6 @@ export default function LanguageMenu() {
                     <option key={item.value} value={item.value}>{item.label}</option>
                 ))}
             </select>
-            <button
-                className="rounded-lg border border-emerald-300 px-3 py-1 text-xs hover:bg-emerald-50"
-                onClick={toggleEnabled}
-                type="button"
-            >
-                Перевод: {enabled ? "ВКЛ" : "ВЫКЛ"}
-            </button>
         </div>
     );
 }
