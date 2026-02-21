@@ -90,10 +90,12 @@ export default function ProfilePage() {
         return `${f}${l}`.trim() || "S";
     }, [firstName, lastName]);
 
-    async function saveAccount() {
+    async function saveAccount(options?: { avatarUrlOverride?: string; successMessage?: string }) {
         if (saving) return;
         setSaving(true);
         setStatus("");
+
+        const avatarToSave = options?.avatarUrlOverride ?? avatarUrl;
 
         try {
             const response = await fetch("/api/account", {
@@ -102,7 +104,7 @@ export default function ProfilePage() {
                 body: JSON.stringify({
                     firstName,
                     lastName,
-                    avatarUrl,
+                    avatarUrl: avatarToSave,
                     preferredLanguage,
                     themeMode,
                 }),
@@ -120,7 +122,7 @@ export default function ProfilePage() {
             window.dispatchEvent(new Event("gp:language-change"));
             window.dispatchEvent(new Event("gp:theme-change"));
 
-            setStatus("Profile settings saved");
+            setStatus(options?.successMessage ?? "Profile settings saved");
         } catch {
             setStatus("Network error while saving settings");
         } finally {
@@ -203,6 +205,11 @@ export default function ProfilePage() {
                         placeholder="https://..."
                         value={avatarUrl}
                         onChange={(event) => setAvatarUrl(event.target.value)}
+                        onBlur={() => {
+                            if (avatarUrl.trim()) {
+                                void saveAccount({ successMessage: "Аватар сохранен" });
+                            }
+                        }}
                     />
                     <label className="mt-3 block text-sm font-medium">Или загрузите с устройства</label>
                     <input
@@ -213,6 +220,7 @@ export default function ProfilePage() {
                             if (!file) return;
                             const imageData = await fileToDataUrl(file);
                             setAvatarUrl(imageData);
+                            void saveAccount({ avatarUrlOverride: imageData, successMessage: "Аватар сохранен" });
                         }}
                         type="file"
                     />

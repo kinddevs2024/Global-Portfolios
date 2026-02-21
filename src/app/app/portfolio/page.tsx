@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import Image from "next/image";
 
 type Education = {
     institutionName: string;
@@ -324,14 +323,14 @@ export default function PortfolioPage() {
         setForm(next);
     }
 
-    async function saveToPlatform() {
+    async function saveToPlatform(sourceForm: PortfolioState = form, successMessage = "Портфолио сохранено") {
         if (saving) return;
         setSaving(true);
         setStatus("Сохранение...");
 
         const payload = {
-            ...buildProfilePayload(form),
-            portfolioData: form,
+            ...buildProfilePayload(sourceForm),
+            portfolioData: sourceForm,
         };
 
         try {
@@ -347,7 +346,7 @@ export default function PortfolioPage() {
                 return false;
             }
 
-            setStatus("Портфолио сохранено");
+            setStatus(successMessage);
             return true;
         } catch {
             setStatus("Сетевая ошибка при сохранении");
@@ -424,6 +423,15 @@ export default function PortfolioPage() {
                             <input className="rounded-xl border border-emerald-200 bg-gray-50 px-3 py-2" placeholder="Email" readOnly value={form.email} />
                             <input className="rounded-xl border border-emerald-200 px-3 py-2" placeholder="Passport Number (Private)" value={form.passportNumber} onChange={(e) => persistDraft({ ...form, passportNumber: e.target.value })} />
                             <input className="rounded-xl border border-emerald-200 px-3 py-2" placeholder="Profile Photo URL" value={form.profilePhoto} onChange={(e) => persistDraft({ ...form, profilePhoto: e.target.value })} />
+                            {form.profilePhoto ? (
+                                <div className="md:col-span-2">
+                                    <p className="mb-1 text-sm font-medium">Preview</p>
+                                    <div
+                                        className="h-36 w-full rounded-xl border border-emerald-100 bg-cover bg-center"
+                                        style={{ backgroundImage: `url(${form.profilePhoto})` }}
+                                    />
+                                </div>
+                            ) : null}
                             <div className="md:col-span-2">
                                 <label className="mb-1 block text-sm font-medium">Или загрузите фото с устройства</label>
                                 <input
@@ -433,7 +441,9 @@ export default function PortfolioPage() {
                                         const file = event.target.files?.[0];
                                         if (!file) return;
                                         const imageData = await fileToDataUrl(file);
-                                        persistDraft({ ...form, profilePhoto: imageData });
+                                        const nextForm = { ...form, profilePhoto: imageData };
+                                        persistDraft(nextForm);
+                                        void saveToPlatform(nextForm, "Изображение сохранено");
                                     }}
                                     type="file"
                                 />
@@ -523,13 +533,17 @@ export default function PortfolioPage() {
                                             const file = event.target.files?.[0];
                                             if (!file) return;
                                             const imageData = await fileToDataUrl(file);
-                                            persistDraft({ ...form, certifications: updateArrayItem(form.certifications, index, { imageUrl: imageData }) });
+                                            const nextForm = { ...form, certifications: updateArrayItem(form.certifications, index, { imageUrl: imageData }) };
+                                            persistDraft(nextForm);
+                                            void saveToPlatform(nextForm, "Изображение сертификата сохранено");
                                         }}
                                         type="file"
                                     />
                                     {item.imageUrl ? (
-                                        <div className="relative h-20 w-full overflow-hidden rounded-lg border border-emerald-100 md:col-span-2">
-                                            <Image alt="Certificate preview" fill src={item.imageUrl} unoptimized className="object-cover" />
+                                        <div
+                                            className="h-20 w-full rounded-lg border border-emerald-100 bg-cover bg-center md:col-span-2"
+                                            style={{ backgroundImage: `url(${item.imageUrl})` }}
+                                        >
                                         </div>
                                     ) : null}
                                 </div>
