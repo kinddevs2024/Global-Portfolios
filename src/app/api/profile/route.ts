@@ -5,7 +5,7 @@ import { requireAuth } from "@/lib/auth/guards";
 import { getStudentByUserId, upsertStudentProfile } from "@/server/services/student.service";
 import {
     AUTH_TOKEN_COOKIE,
-    getBackendApiUrl,
+    fetchBackendWithFallback,
     parseBackendErrorMessage,
 } from "@/lib/auth/backendAuth";
 
@@ -32,7 +32,7 @@ const profileSchema = z.object({
     hasGrant: z.boolean().default(false),
 });
 
-async function syncBackendStudentProfile(body: z.infer<typeof profileSchema>) {
+async function syncBackendStudentProfile(body: z.infer<typeof profileSchema>, request: Request) {
     const cookieStore = await cookies();
     const token = cookieStore.get(AUTH_TOKEN_COOKIE)?.value;
 
@@ -62,15 +62,19 @@ async function syncBackendStudentProfile(body: z.infer<typeof profileSchema>) {
         },
     };
 
-    const response = await fetch(getBackendApiUrl("/students"), {
-        method: "POST",
-        headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
+    const { response } = await fetchBackendWithFallback(
+        "/students",
+        {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(backendPayload),
+            cache: "no-store",
         },
-        body: JSON.stringify(backendPayload),
-        cache: "no-store",
-    });
+        request,
+    );
 
     if (response.status === 409) {
         return;
@@ -100,7 +104,11 @@ export async function PUT(request: Request) {
         const body = profileSchema.parse(await request.json());
         const profile = await upsertStudentProfile(user.userId, body);
 
-        await syncBackendStudentProfile(body);
+        try {
+            await syncBackendStudentProfile(body, request);
+        } catch (syncError) {
+            console.warn("[PROFILE_BACKEND_SYNC_WARNING]", syncError instanceof Error ? syncError.message : syncError);
+        }
 
         return NextResponse.json({ data: profile });
     } catch (error) {

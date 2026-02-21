@@ -46,3 +46,55 @@ export function shouldUseSecureAuthCookies(request: Request) {
         return process.env.NODE_ENV === "production";
     }
 }
+
+function normalizeApiBase(value: string) {
+    const trimmed = value.trim().replace(/\/$/, "");
+    return trimmed.endsWith("/api") ? trimmed : `${trimmed}/api`;
+}
+
+export function getBackendApiBaseCandidates(request?: Request) {
+    const candidates = new Set<string>([
+        normalizeApiBase(getBackendApiBase()),
+        "http://127.0.0.1:4000/api",
+        "http://localhost:4000/api",
+    ]);
+
+    if (request) {
+        try {
+            const hostname = new URL(request.url).hostname;
+            if (hostname && hostname !== "127.0.0.1" && hostname !== "localhost") {
+                candidates.add(`http://${hostname}:4000/api`);
+            }
+        } catch {
+            // no-op
+        }
+    }
+
+    return Array.from(candidates);
+}
+
+export function getBackendApiUrlCandidates(path: string, request?: Request) {
+    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+    return getBackendApiBaseCandidates(request).map((base) => `${base}${normalizedPath}`);
+}
+
+type BackendFetchResult = {
+    response: Response;
+    url: string;
+};
+
+export async function fetchBackendWithFallback(path: string, init: RequestInit = {}, request?: Request): Promise<BackendFetchResult> {
+    const candidates = getBackendApiUrlCandidates(path, request);
+    let lastError: unknown = null;
+
+    for (const url of candidates) {
+        try {
+            const response = await fetch(url, init);
+            return { response, url };
+        } catch (error) {
+            lastError = error;
+        }
+    }
+
+    throw new Error(`Backend fetch failed for candidates: ${candidates.join(", ")}. Last error: ${String(lastError)}`);
+}

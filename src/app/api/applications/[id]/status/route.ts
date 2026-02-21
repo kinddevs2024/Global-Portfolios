@@ -7,5 +7,5 @@ type Params = {
 export async function PATCH(request: Request, { params }: Params) {
     const { id } = await params;
     const body = (await request.json()) as { status: "accepted" | "rejected" | "withdrawn" };
-    return backendAuthedFetch(`/applications/${id}/status`, { method: "PATCH", body });
+    return backendAuthedFetch(`/applications/${id}/status`, { method: "PATCH", body }, request);
 }

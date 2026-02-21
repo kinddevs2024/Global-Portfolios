@@ -1,5 +1,5 @@
 import { backendAuthedFetch } from "@/lib/auth/backendProxy";
 
-export async function GET() {
-    return backendAuthedFetch("/universities");
+export async function GET(request: Request) {
+    return backendAuthedFetch("/universities", {}, request);
 }

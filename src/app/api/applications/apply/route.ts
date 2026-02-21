@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import {
     AUTH_TOKEN_COOKIE,
-    getBackendApiUrl,
+    fetchBackendWithFallback,
     parseBackendErrorMessage,
 } from "@/lib/auth/backendAuth";
 
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     }
 
     async function apply() {
-        return fetch(getBackendApiUrl("/applications/apply"), {
+        const { response } = await fetchBackendWithFallback("/applications/apply", {
             method: "POST",
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -25,24 +25,37 @@ export async function POST(request: Request) {
             },
             body: JSON.stringify(body),
             cache: "no-store",
-        });
+        }, request);
+        return response;
     }
 
-    let response = await apply();
+    let response: Response;
+    try {
+        response = await apply();
+    } catch (error) {
+        return NextResponse.json({ error: error instanceof Error ? error.message : "Backend is unavailable" }, { status: 502 });
+    }
 
     if (!response.ok) {
         const message = await parseBackendErrorMessage(response, "Request failed");
 
         if (message.includes("Student profile is required before applying")) {
-            const createProfileResponse = await fetch(getBackendApiUrl("/students"), {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({}),
-                cache: "no-store",
-            });
+            let createProfileResponse: Response;
+            try {
+                const result = await fetchBackendWithFallback("/students", {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({}),
+                    cache: "no-store",
+                }, request);
+
+                createProfileResponse = result.response;
+            } catch (error) {
+                return NextResponse.json({ error: error instanceof Error ? error.message : "Backend is unavailable" }, { status: 502 });
+            }
 
             if (createProfileResponse.ok || createProfileResponse.status === 409) {
                 response = await apply();
