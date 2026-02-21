@@ -21,6 +21,8 @@ async function safeReadError(response: Response, fallback: string) {
 }
 
 export async function POST(request: Request) {
+    const backendRegisterUrl = getBackendApiUrl("/auth/register");
+
     try {
         const body = (await request.json()) as RegisterBody;
         const email = String(body.email ?? "").trim().toLowerCase();
@@ -42,7 +44,7 @@ export async function POST(request: Request) {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 15000);
 
-        const backendResponse = await fetch(getBackendApiUrl("/auth/register"), {
+        const backendResponse = await fetch(backendRegisterUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email, password, role }),
@@ -91,7 +93,22 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Server timeout. Please try again" }, { status: 504 });
         }
 
-        console.error("[AUTH_REGISTER_ERROR]", error instanceof Error ? error.message : error);
+        if (error instanceof TypeError) {
+            console.error("[AUTH_REGISTER_BACKEND_UNREACHABLE]", {
+                backendRegisterUrl,
+                message: error.message,
+            });
+
+            return NextResponse.json(
+                { error: "Auth backend is unavailable. Check BACKEND_API_URL and backend process" },
+                { status: 502 },
+            );
+        }
+
+        console.error("[AUTH_REGISTER_ERROR]", {
+            backendRegisterUrl,
+            error: error instanceof Error ? error.message : error,
+        });
 
         return NextResponse.json(
             { error: "Registration failed. Please try again" },
