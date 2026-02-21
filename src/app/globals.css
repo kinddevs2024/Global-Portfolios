@@ -37,6 +37,22 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--foreground);
+}
+
+p,
+span,
+label,
+small {
+  color: inherit;
+}
+
 .card {
   border: 1px solid var(--border);
   background: var(--surface);
@@ -47,4 +63,35 @@ body {
   background: var(--muted);
   color: #057a43;
   border: 1px solid var(--border);
+}
+
+input,
+select,
+textarea {
+  background: var(--surface);
+  color: var(--foreground);
+  border-color: var(--border);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+}
+
+input:read-only,
+select:disabled,
+textarea:read-only {
+  background: var(--surface-soft);
+}
+
+[data-theme="dark"] .text-gray-500,
+[data-theme="dark"] .text-gray-600,
+[data-theme="dark"] .text-gray-700 {
+  color: var(--text-muted) !important;
+}
+
+[data-theme="dark"] .bg-white,
+[data-theme="dark"] .bg-white\/95,
+[data-theme="dark"] .bg-gray-50 {
+  background: var(--surface) !important;
 }

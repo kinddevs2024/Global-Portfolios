@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { AUTO_KEY, LANGUAGE_KEY } from "@/components/auto-translator";
 import { THEME_KEY, type ThemeMode } from "@/components/theme-controller";
 
@@ -14,6 +15,15 @@ type AccountPayload = {
     preferredLanguage: string;
     themeMode: ThemeMode;
 };
+
+async function fileToDataUrl(file: File) {
+    return await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result ?? ""));
+        reader.onerror = () => reject(new Error("Failed to read image"));
+        reader.readAsDataURL(file);
+    });
+}
 
 export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
@@ -183,7 +193,9 @@ export default function ProfilePage() {
                     <h2 className="text-base font-semibold">Аватар</h2>
                     <div className="mt-4 flex justify-center">
                         {avatarPreview ? (
-                            <img alt="Student avatar" className="h-32 w-32 rounded-full border border-emerald-200 object-cover" src={avatarPreview} />
+                            <div className="relative h-32 w-32 overflow-hidden rounded-full border border-emerald-200">
+                                <Image alt="Student avatar" fill src={avatarPreview} unoptimized className="object-cover" />
+                            </div>
                         ) : (
                             <div className="flex h-32 w-32 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-3xl font-bold text-emerald-700">
                                 {initials}
@@ -196,6 +208,18 @@ export default function ProfilePage() {
                         placeholder="https://..."
                         value={avatarUrl}
                         onChange={(event) => setAvatarUrl(event.target.value)}
+                    />
+                    <label className="mt-3 block text-sm font-medium">Или загрузите с устройства</label>
+                    <input
+                        accept="image/*"
+                        className="mt-1 w-full rounded-xl border border-emerald-200 px-3 py-2"
+                        onChange={async (event) => {
+                            const file = event.target.files?.[0];
+                            if (!file) return;
+                            const imageData = await fileToDataUrl(file);
+                            setAvatarUrl(imageData);
+                        }}
+                        type="file"
                     />
                 </article>
 
@@ -244,15 +268,14 @@ export default function ProfilePage() {
                                 </select>
                             </div>
                             <div>
-                                <label className="mb-1 block text-sm font-medium">Auto translate</label>
-                                <select
-                                    className="w-full rounded-xl border border-emerald-200 px-3 py-2"
-                                    value={autoTranslate ? "true" : "false"}
-                                    onChange={(event) => setAutoTranslate(event.target.value === "true")}
+                                <label className="mb-1 block text-sm font-medium">Перевод</label>
+                                <button
+                                    className="w-full rounded-xl border border-emerald-300 px-3 py-2 text-left"
+                                    onClick={() => setAutoTranslate((current) => !current)}
+                                    type="button"
                                 >
-                                    <option value="true">Enabled</option>
-                                    <option value="false">Disabled</option>
-                                </select>
+                                    {autoTranslate ? "Включен" : "Выключен"}
+                                </button>
                             </div>
                         </div>
                     </div>

@@ -3,6 +3,7 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import { requireAuth } from "@/lib/auth/guards";
 import LogoutButton from "./logout-button";
+import LanguageMenu from "@/components/language-menu";
 
 export default async function PlatformLayout({ children }: { children: React.ReactNode }) {
     try {
@@ -13,7 +14,7 @@ export default async function PlatformLayout({ children }: { children: React.Rea
 
     return (
         <div className="min-h-screen bg-background">
-            <header className="bg-white/95">
+            <header className="bg-[var(--surface)]">
                 <div className="mx-auto w-full max-w-7xl px-6 md:px-10">
                     <div className="flex items-center justify-between gap-4 border-b border-emerald-100 py-4">
                         <div className="flex items-center gap-3">
@@ -24,6 +25,7 @@ export default async function PlatformLayout({ children }: { children: React.Rea
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
+                            <LanguageMenu />
                             <Link className="rounded-lg px-3 py-2 text-sm hover:bg-emerald-50" href="/">
                                 Главная сайта
                             </Link>

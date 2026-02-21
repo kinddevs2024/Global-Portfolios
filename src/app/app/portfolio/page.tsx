@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Image from "next/image";
 
 type Education = {
     institutionName: string;
@@ -17,7 +18,7 @@ type Education = {
 
 type Language = { name: string; level: string; certificate: string; score: string };
 type Skill = { name: string; level: string };
-type Certification = { name: string; organization: string; issueDate: string; expirationDate: string; score: string; verificationLink: string };
+type Certification = { name: string; organization: string; issueDate: string; expirationDate: string; score: string; verificationLink: string; imageUrl: string };
 type Internship = { companyName: string; position: string; country: string; startDate: string; endDate: string; description: string; skillsGained: string };
 type Project = { title: string; description: string; role: string; technologies: string; link: string; duration: string; outcome: string };
 type Award = { title: string; organization: string; level: string; date: string; description: string };
@@ -85,7 +86,7 @@ const defaultState: PortfolioState = {
     languages: [{ name: "", level: "", certificate: "", score: "" }],
     hardSkills: [{ name: "", level: "3" }],
     softSkills: [{ name: "", level: "3" }],
-    certifications: [{ name: "", organization: "", issueDate: "", expirationDate: "", score: "", verificationLink: "" }],
+    certifications: [{ name: "", organization: "", issueDate: "", expirationDate: "", score: "", verificationLink: "", imageUrl: "" }],
     internships: [{ companyName: "", position: "", country: "", startDate: "", endDate: "", description: "", skillsGained: "" }],
     projects: [{ title: "", description: "", role: "", technologies: "", link: "", duration: "", outcome: "" }],
     awards: [{ title: "", organization: "", level: "Local", date: "", description: "" }],
@@ -132,6 +133,27 @@ function updateArrayItem<T>(items: T[], index: number, patch: Partial<T>) {
 
 function hasText(value: unknown) {
     return String(value ?? "").trim().length > 0;
+}
+
+function pickText(serverValue: unknown, currentValue: string) {
+    const serverText = String(serverValue ?? "").trim();
+    return serverText.length > 0 ? serverText : currentValue;
+}
+
+function pickGpa(serverValue: unknown, currentValue: string) {
+    if (typeof serverValue === "number" && Number.isFinite(serverValue) && serverValue > 0) {
+        return String(serverValue);
+    }
+    return currentValue;
+}
+
+async function fileToDataUrl(file: File) {
+    return await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result ?? ""));
+        reader.onerror = () => reject(new Error("Failed to read file"));
+        reader.readAsDataURL(file);
+    });
 }
 
 function getMissingFields(form: PortfolioState): MissingField[] {
@@ -263,16 +285,19 @@ export default function PortfolioPage() {
 
                 setForm((current) => ({
                     ...current,
-                    firstName: profile.personalInfo?.firstName ?? current.firstName,
-                    lastName: profile.personalInfo?.lastName ?? current.lastName,
-                    country: profile.personalInfo?.country ?? current.country,
+                    firstName: pickText(profile.personalInfo?.firstName, current.firstName),
+                    lastName: pickText(profile.personalInfo?.lastName, current.lastName),
+                    country: pickText(profile.personalInfo?.country, current.country),
                     hardSkills:
                         profile.skills && profile.skills.length > 0
-                            ? profile.skills.map((skill) => ({ name: skill.name ?? "", level: "3" }))
+                            ? profile.skills
+                                .map((skill) => ({ name: String(skill.name ?? "").trim(), level: "3" }))
+                                .filter((skill) => skill.name.length > 0)
                             : current.hardSkills,
                     projects:
                         profile.projects && profile.projects.length > 0
-                            ? profile.projects.map((project) => ({
+                            ? profile.projects
+                                .map((project) => ({
                                 title: project.name ?? "",
                                 description: "",
                                 role: "",
@@ -280,13 +305,14 @@ export default function PortfolioPage() {
                                 link: "",
                                 duration: "",
                                 outcome: "",
-                            }))
+                                }))
+                                .filter((project) => hasText(project.title) || hasText(project.technologies))
                             : current.projects,
                     education:
                         current.education.length > 0
                             ? updateArrayItem(current.education, 0, {
-                                gpa: profile.academicInfo?.gpa ? String(profile.academicInfo.gpa) : current.education[0]?.gpa ?? "",
-                                fieldOfStudy: profile.personalInfo?.language ?? current.education[0]?.fieldOfStudy ?? "",
+                                gpa: pickGpa(profile.academicInfo?.gpa, current.education[0]?.gpa ?? ""),
+                                fieldOfStudy: pickText(profile.personalInfo?.language, current.education[0]?.fieldOfStudy ?? ""),
                             })
                             : current.education,
                 }));
@@ -427,6 +453,20 @@ export default function PortfolioPage() {
                             <input className="rounded-xl border border-emerald-200 bg-gray-50 px-3 py-2" placeholder="Email" readOnly value={form.email} />
                             <input className="rounded-xl border border-emerald-200 px-3 py-2" placeholder="Passport Number (Private)" value={form.passportNumber} onChange={(e) => persistDraft({ ...form, passportNumber: e.target.value })} />
                             <input className="rounded-xl border border-emerald-200 px-3 py-2" placeholder="Profile Photo URL" value={form.profilePhoto} onChange={(e) => persistDraft({ ...form, profilePhoto: e.target.value })} />
+                            <div className="md:col-span-2">
+                                <label className="mb-1 block text-sm font-medium">Или загрузите фото с устройства</label>
+                                <input
+                                    accept="image/*"
+                                    className="w-full rounded-xl border border-emerald-200 px-3 py-2"
+                                    onChange={async (event) => {
+                                        const file = event.target.files?.[0];
+                                        if (!file) return;
+                                        const imageData = await fileToDataUrl(file);
+                                        persistDraft({ ...form, profilePhoto: imageData });
+                                    }}
+                                    type="file"
+                                />
+                            </div>
                         </div>
                     </>
                 ) : null}
@@ -505,9 +545,25 @@ export default function PortfolioPage() {
                                     <input className="rounded-lg border border-emerald-200 px-3 py-2" type="date" value={item.issueDate} onChange={(e) => persistDraft({ ...form, certifications: updateArrayItem(form.certifications, index, { issueDate: e.target.value }) })} />
                                     <input className="rounded-lg border border-emerald-200 px-3 py-2" type="date" value={item.expirationDate} onChange={(e) => persistDraft({ ...form, certifications: updateArrayItem(form.certifications, index, { expirationDate: e.target.value }) })} />
                                     <input className="rounded-lg border border-emerald-200 px-3 py-2" placeholder="Verification Link" value={item.verificationLink} onChange={(e) => persistDraft({ ...form, certifications: updateArrayItem(form.certifications, index, { verificationLink: e.target.value }) })} />
+                                    <input
+                                        accept="image/*"
+                                        className="rounded-lg border border-emerald-200 px-3 py-2"
+                                        onChange={async (event) => {
+                                            const file = event.target.files?.[0];
+                                            if (!file) return;
+                                            const imageData = await fileToDataUrl(file);
+                                            persistDraft({ ...form, certifications: updateArrayItem(form.certifications, index, { imageUrl: imageData }) });
+                                        }}
+                                        type="file"
+                                    />
+                                    {item.imageUrl ? (
+                                        <div className="relative h-20 w-full overflow-hidden rounded-lg border border-emerald-100 md:col-span-2">
+                                            <Image alt="Certificate preview" fill src={item.imageUrl} unoptimized className="object-cover" />
+                                        </div>
+                                    ) : null}
                                 </div>
                             ))}
-                            <button className="rounded-lg border border-emerald-300 px-3 py-2 text-sm" onClick={() => persistDraft({ ...form, certifications: [...form.certifications, { name: "", organization: "", issueDate: "", expirationDate: "", score: "", verificationLink: "" }] })} type="button">+ Add More Certification</button>
+                            <button className="rounded-lg border border-emerald-300 px-3 py-2 text-sm" onClick={() => persistDraft({ ...form, certifications: [...form.certifications, { name: "", organization: "", issueDate: "", expirationDate: "", score: "", verificationLink: "", imageUrl: "" }] })} type="button">+ Add More Certification</button>
                         </div>
                     </>
                 ) : null}
