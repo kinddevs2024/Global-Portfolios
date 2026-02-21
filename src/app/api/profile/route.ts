@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { z } from "zod";
 import { requireAuth } from "@/lib/auth/guards";
 import { getStudentByUserId, upsertStudentProfile } from "@/server/services/student.service";
+import {
+    AUTH_TOKEN_COOKIE,
+    getBackendApiUrl,
+    parseBackendErrorMessage,
+} from "@/lib/auth/backendAuth";
 
 const profileSchema = z.object({
     firstName: z.string().min(1),
@@ -26,6 +32,56 @@ const profileSchema = z.object({
     hasGrant: z.boolean().default(false),
 });
 
+async function syncBackendStudentProfile(body: z.infer<typeof profileSchema>) {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(AUTH_TOKEN_COOKIE)?.value;
+
+    if (!token) {
+        throw new Error("Unauthorized");
+    }
+
+    const backendPayload = {
+        firstName: body.firstName,
+        lastName: body.lastName,
+        country: body.country,
+        GPA: body.gpa,
+        skills: body.skills,
+        languages: [body.language],
+        education: body.examResults,
+        internships: body.recommendationLetters,
+        projects: [body.projectName],
+        awards: [],
+        motivationText: "",
+        videoPresentationLink: "",
+        visibilitySettings: {
+            GPAVisible: true,
+            certificationsVisible: true,
+            internshipsVisible: true,
+            projectsVisible: true,
+            awardsVisible: true,
+        },
+    };
+
+    const response = await fetch(getBackendApiUrl("/students"), {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(backendPayload),
+        cache: "no-store",
+    });
+
+    if (response.status === 409) {
+        return;
+    }
+
+    if (!response.ok) {
+        const message = await parseBackendErrorMessage(response, "Failed to sync backend student profile");
+        throw new Error(message);
+    }
+}
+
 export async function GET() {
     try {
         const user = await requireAuth(["student"]);
@@ -43,6 +99,9 @@ export async function PUT(request: Request) {
         const user = await requireAuth(["student"]);
         const body = profileSchema.parse(await request.json());
         const profile = await upsertStudentProfile(user.userId, body);
+
+        await syncBackendStudentProfile(body);
+
         return NextResponse.json({ data: profile });
     } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to save profile";

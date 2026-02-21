@@ -3,19 +3,30 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3005",
+    "dev": "next dev --webpack -p 3005",
+    "clean": "node -e \"const fs=require('fs');try{fs.rmSync('.next',{recursive:true,force:true});console.log('cleaned .next')}catch(e){console.error(e);process.exit(1)}\"",
     "build": "next build",
     "start": "next start -p 3005",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed:universities": "node backend/scripts/seedFakeUniversities.js",
+    "backend:dev": "nodemon --watch backend/src --ext js,json --ignore .next --ignore node_modules backend/src/server.js",
+    "backend:start": "node backend/src/server.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
     "framer-motion": "^12.34.2",
+    "express": "^5.1.0",
     "jsonwebtoken": "^9.0.3",
+    "helmet": "^8.1.0",
+    "morgan": "^1.10.1",
     "mongoose": "^8.23.0",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "socket.io": "^4.8.1",
+    "express-rate-limit": "^7.5.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -26,6 +37,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "nodemon": "^3.1.10",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

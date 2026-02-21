@@ -1,43 +1,49 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+
+type RegisterRole = "student" | "university" | "admin";
 
 export default function RegisterPage() {
-    const router = useRouter();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [role, setRole] = useState("student");
+    const [role, setRole] = useState<RegisterRole>("student");
     const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
 
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
+        if (submitting) return;
         setError("");
-        setLoading(true);
+        setSubmitting(true);
 
-        const response = await fetch("/api/auth/register", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password, role }),
-        });
+        try {
+            const response = await fetch("/api/auth/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password, role }),
+            });
 
-        setLoading(false);
+            if (!response.ok) {
+                const result = (await response.json()) as { error?: string };
+                setError(result.error ?? "Registration failed");
+                return;
+            }
 
-        if (!response.ok) {
-            const result = (await response.json()) as { error?: string };
-            setError(result.error ?? "Registration failed");
-            return;
+            window.location.assign("/app");
+        } catch {
+            setError("Network error. Please try again.");
+        } finally {
+            setSubmitting(false);
         }
-
-        router.push("/");
     }
 
     return (
         <div className="min-h-screen px-6 py-10 md:px-12">
-            <main className="mx-auto max-w-lg card p-6">
+            <main className="mx-auto max-w-md card p-6">
                 <h1 className="text-2xl font-bold">Create account</h1>
-                <p className="mt-1 text-sm text-gray-600">Register as student, investor, university, or admin.</p>
+                <p className="mt-1 text-sm text-gray-600">Use email and password to create your account.</p>
 
                 <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
                     <div>
@@ -66,10 +72,9 @@ export default function RegisterPage() {
                         <select
                             className="w-full rounded-xl border border-emerald-200 px-3 py-2"
                             value={role}
-                            onChange={(event) => setRole(event.target.value)}
+                            onChange={(event) => setRole(event.target.value as RegisterRole)}
                         >
                             <option value="student">Student</option>
-                            <option value="investor">Investor</option>
                             <option value="university">University</option>
                             <option value="admin">Admin</option>
                         </select>
@@ -79,11 +84,18 @@ export default function RegisterPage() {
 
                     <button
                         className="w-full rounded-xl bg-emerald-600 px-4 py-2 text-white disabled:opacity-70"
-                        disabled={loading}
+                        disabled={submitting}
                         type="submit"
                     >
-                        {loading ? "Creating..." : "Register"}
+                        {submitting ? "Registering..." : "Register"}
                     </button>
+
+                    <p className="text-center text-sm text-gray-600">
+                        Already have an account? <Link className="font-medium text-emerald-700" href="/auth/login">Login</Link>
+                    </p>
+                    <p className="text-center text-xs text-gray-500">
+                        <Link className="hover:text-gray-700" href="/">← Back to homepage</Link>
+                    </p>
                 </form>
             </main>
         </div>
