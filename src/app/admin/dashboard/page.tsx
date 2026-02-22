@@ -1,3 +1,6 @@
+import { requireAuth } from "@/lib/auth/guards";
+import { redirect } from "next/navigation";
+
 const adminAreas = [
   "Document Verification",
   "University Verification",
@@ -6,7 +9,13 @@ const adminAreas = [
   "Scoring Weight Management",
 ];
 
-export default function AdminDashboardPage() {
+export default async function AdminDashboardPage() {
+    try {
+        await requireAuth(["admin"]);
+    } catch {
+        redirect("/admin");
+    }
+
   return (
     <div className="min-h-screen px-6 py-10 md:px-12">
       <main className="mx-auto max-w-6xl space-y-6">

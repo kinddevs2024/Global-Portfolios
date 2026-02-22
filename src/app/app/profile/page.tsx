@@ -293,7 +293,7 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <button className="rounded-xl bg-emerald-600 px-4 py-2 text-white disabled:opacity-70" disabled={saving} onClick={saveAccount} type="button">
+                        <button className="rounded-xl bg-emerald-600 px-4 py-2 text-white disabled:opacity-70" disabled={saving} onClick={() => void saveAccount()} type="button">
                             {saving ? "Saving..." : "Сохранить настройки"}
                         </button>
                         {status ? <p className="text-sm text-gray-700">{status}</p> : null}

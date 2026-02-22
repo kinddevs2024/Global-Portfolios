@@ -11,6 +11,8 @@ const userSchema = new Schema(
         avatarUrl: { type: String, default: "" },
         preferredLanguage: { type: String, default: "auto" },
         themeMode: { type: String, enum: ["light", "dark", "system"], default: "system" },
+        emailVerificationToken: { type: String, default: null },
+        emailVerifiedAt: { type: Date, default: null },
     },
     { timestamps: true },
 );

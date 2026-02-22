@@ -1,10 +1,15 @@
 import bcrypt from "bcryptjs";
+import crypto from "node:crypto";
 import { connectToDatabase } from "@/lib/db/mongoose";
-import { UserModel } from "@/server/models/User";
+import { UserModel, type UserDocument } from "@/server/models/User";
 import { signToken } from "@/lib/auth/jwt";
 import type { UserRole } from "@/types/auth";
 
-export async function registerUser(email: string, password: string, role: UserRole) {
+export async function registerUser(
+    email: string,
+    password: string,
+    role: UserRole,
+): Promise<{ user: UserDocument; token: string; verificationToken: string }> {
     await connectToDatabase();
 
     const existing = await UserModel.findOne({ email });
@@ -13,7 +18,13 @@ export async function registerUser(email: string, password: string, role: UserRo
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const created = await UserModel.create({ email, passwordHash, role });
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const created = (await UserModel.create({
+        email,
+        passwordHash,
+        role,
+        emailVerificationToken: verificationToken,
+    })) as unknown as UserDocument;
 
     const token = signToken({
         userId: created._id.toString(),
@@ -21,7 +32,7 @@ export async function registerUser(email: string, password: string, role: UserRo
         email: created.email,
     });
 
-    return { user: created, token };
+    return { user: created, token, verificationToken };
 }
 
 export async function loginUser(email: string, password: string) {
@@ -35,6 +46,10 @@ export async function loginUser(email: string, password: string) {
     const isValid = await bcrypt.compare(password, user.passwordHash);
     if (!isValid) {
         throw new Error("Invalid credentials");
+    }
+
+    if (user.emailVerificationToken && !user.emailVerifiedAt) {
+        throw new Error("Please verify your email first. Check your inbox for the verification link.");
     }
 
     const token = signToken({

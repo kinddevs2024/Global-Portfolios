@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { AUTH_REFRESH_TOKEN_COOKIE, AUTH_TOKEN_COOKIE, getBackendApiBase, getBackendApiUrl, shouldUseSecureAuthCookies } from "@/lib/auth/backendAuth";
+import { sendVerificationEmail } from "@/lib/email";
 import { registerUser } from "@/server/services/auth.service";
 
 type RegisterBody = {
@@ -7,6 +8,8 @@ type RegisterBody = {
     password?: string;
     role?: "student" | "university" | "admin";
 };
+
+const PUBLIC_ROLES = ["student", "university"] as const;
 
 function isValidEmail(value: string) {
     return /^\S+@\S+\.\S+$/.test(value);
@@ -62,8 +65,8 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
         }
 
-        if (!role || !["student", "university", "admin"].includes(role)) {
-            return NextResponse.json({ error: "Please select a valid account role" }, { status: 400 });
+        if (!role || !PUBLIC_ROLES.includes(role as (typeof PUBLIC_ROLES)[number])) {
+            return NextResponse.json({ error: "Please select Student or University" }, { status: 400 });
         }
 
         let backendResponse: Response | null = null;
@@ -102,32 +105,25 @@ export async function POST(request: Request) {
             });
 
             try {
-                const { user, token } = await registerUser(email, password, role);
-                const response = NextResponse.json({
+                const { user, verificationToken } = await registerUser(email, password, role);
+                let baseUrl = process.env.NEXT_PUBLIC_APP_URL;
+                if (!baseUrl) {
+                    try {
+                        baseUrl = new URL(request.url).origin;
+                    } catch {
+                        baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3005";
+                    }
+                }
+                await sendVerificationEmail(email, verificationToken, baseUrl);
+
+                return NextResponse.json({
                     user: {
-                        id: user._id.toString(),
+                        id: String(user._id),
                         email: user.email,
                         role: user.role,
                     },
+                    requiresVerification: true,
                 });
-
-                response.cookies.set(AUTH_TOKEN_COOKIE, token, {
-                    httpOnly: true,
-                    sameSite: "lax",
-                    secure: secureCookies,
-                    path: "/",
-                    maxAge: 60 * 60 * 24 * 7,
-                });
-
-                response.cookies.set(AUTH_REFRESH_TOKEN_COOKIE, "", {
-                    httpOnly: true,
-                    sameSite: "lax",
-                    secure: secureCookies,
-                    path: "/",
-                    maxAge: 0,
-                });
-
-                return response;
             } catch (fallbackError) {
                 const fallbackMessage = fallbackError instanceof Error ? fallbackError.message : "Registration failed";
                 const fallbackStatus = fallbackMessage === "User already exists" ? 409 : 500;

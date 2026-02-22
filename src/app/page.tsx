@@ -32,7 +32,7 @@ export default async function Home() {
                 <Link className="rounded-xl bg-emerald-600 px-4 py-2 text-white" href="/app">Кабинет</Link>
               ) : (
                 <>
-                  <Link className="rounded-xl border border-emerald-300 px-4 py-2" href="/auth/register">Register</Link>
+                  <Link className="rounded-xl border border-emerald-300 px-4 py-2" href="/auth/choose-role">Register</Link>
                   <Link className="rounded-xl bg-emerald-600 px-4 py-2 text-white" href="/auth/login">Login</Link>
                 </>
               )}
@@ -55,7 +55,7 @@ export default async function Home() {
             ) : (
               <>
                 <Link className="rounded-xl bg-emerald-600 px-5 py-3 text-white" href="/auth/login">Login to platform</Link>
-                <Link className="rounded-xl border border-emerald-300 px-5 py-3" href="/auth/register">Create account</Link>
+                <Link className="rounded-xl border border-emerald-300 px-5 py-3" href="/auth/choose-role">Create account</Link>
               </>
             )}
           </div>

@@ -120,6 +120,10 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
         }
 
+        if (error instanceof Error && error.message.startsWith("Please verify your email")) {
+            return NextResponse.json({ error: error.message }, { status: 403 });
+        }
+
         console.error("[AUTH_LOGIN_ERROR]", error instanceof Error ? error.message : error);
 
         return NextResponse.json(
