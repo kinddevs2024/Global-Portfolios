@@ -7,7 +7,7 @@ import { UserModel } from "@/server/models/User";
 const accountUpdateSchema = z.object({
     firstName: z.string().trim().max(80).optional(),
     lastName: z.string().trim().max(80).optional(),
-    avatarUrl: z.string().trim().max(1000).optional(),
+    avatarUrl: z.string().trim().max(5_000_000).optional(),
     preferredLanguage: z.string().trim().min(2).max(20).optional(),
     themeMode: z.enum(["light", "dark", "system"]).optional(),
 });
