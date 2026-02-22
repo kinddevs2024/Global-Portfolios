@@ -40,7 +40,27 @@ function hasText(value: unknown) {
     return String(value ?? "").trim().length > 0;
 }
 
-function getStepForMissingLabel(label: string) {
+const STEP_LABELS: Record<number, string> = {
+    1: "Basic Info",
+    2: "Education",
+    3: "Skills",
+    4: "Certifications",
+    5: "Experience",
+    6: "Achievements",
+    7: "Optional",
+};
+
+const STEP_REQUIRED_COUNTS: Record<number, number> = {
+    1: 10,
+    2: 5,
+    3: 2,
+    4: 2,
+    5: 4,
+    6: 2,
+    7: 3,
+};
+
+function getStepForMissingLabel(label: string): number {
     if (
         label === "First Name"
         || label === "Last Name"
@@ -55,40 +75,28 @@ function getStepForMissingLabel(label: string) {
     ) {
         return 1;
     }
-
-    if (
-        label.startsWith("Education:")
-        || label === "Language"
-        || label === "Language Proficiency"
-    ) {
-        return 2;
-    }
-
-    if (label === "Hard Skill" || label === "Soft Skill") {
-        return 3;
-    }
-
-    if (label.startsWith("Certification")) {
-        return 4;
-    }
-
-    if (label.startsWith("Internship") || label.startsWith("Project")) {
-        return 5;
-    }
-
-    if (label.startsWith("Award")) {
-        return 6;
-    }
-
-    if (
-        label === "Personal Statement"
-        || label === "Career Goals"
-        || label === "Preferred Fields"
-    ) {
-        return 7;
-    }
-
+    if (label.startsWith("Education") || label === "Language" || label === "Language Proficiency") return 2;
+    if (label === "Hard Skill" || label === "Soft Skill" || label.includes("Hard Skill") || label.includes("Soft Skill")) return 3;
+    if (label.startsWith("Certification")) return 4;
+    if (label.startsWith("Internship") || label.startsWith("Project")) return 5;
+    if (label.startsWith("Award")) return 6;
+    if (label === "Personal Statement" || label === "Career Goals" || label === "Preferred Fields") return 7;
     return 1;
+}
+
+function getStepCompletionsFromMissing(missing: string[]) {
+    const missingByStep: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0 };
+    for (const label of missing) {
+        const s = getStepForMissingLabel(label);
+        missingByStep[s] = (missingByStep[s] ?? 0) + 1;
+    }
+    return [1, 2, 3, 4, 5, 6, 7].map((stepNum) => {
+        const required = STEP_REQUIRED_COUNTS[stepNum] ?? 1;
+        const missingCount = missingByStep[stepNum] ?? 0;
+        const filled = required - missingCount;
+        const completion = Math.min(100, Math.round((filled / required) * 100));
+        return { step: stepNum, label: STEP_LABELS[stepNum], completion };
+    });
 }
 
 function computeCompletionFromPortfolio(draft: StudentProfile["portfolioData"] | null | undefined) {
@@ -241,7 +249,7 @@ export default function AppHomePage() {
     const rating = profile?.globalScore ?? 0;
     const skills = (profile?.skills ?? []).map((item) => item.name).filter(Boolean).slice(0, 6) as string[];
     const recommendation = profile?.aiAnalysis?.recommendation ?? "Заполните портфолио полностью, чтобы получить персональные рекомендации.";
-    const firstMissingStep = profileMissing.length > 0 ? getStepForMissingLabel(profileMissing[0]) : 1;
+    const stepCompletions = getStepCompletionsFromMissing(profileMissing);
 
     return (
         <div className="space-y-6">
@@ -252,30 +260,70 @@ export default function AppHomePage() {
             </section>
 
             {profileCompletion < 100 ? (
-                <section className="card p-5">
-                    <h2 className="text-lg font-semibold">Можно дополнить профиль</h2>
-                    <p className="mt-2 text-sm text-gray-600">Заполнено: {profileCompletion}%. Для 100% дополните оставшиеся разделы.</p>
-                    <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-emerald-100">
-                        <div className="h-full bg-emerald-600 transition-all duration-500 ease-out" style={{ width: `${profileCompletion}%` }} />
-                    </div>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                        {profileMissing.slice(0, 8).map((item) => (
-                            <span className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs text-amber-800" key={item}>
-                                {item}
-                            </span>
+                <section className="card p-6">
+                    <h2 className="text-lg font-semibold">Заполните разделы портфолио</h2>
+                    <p className="mt-1 text-sm text-gray-600">Заполнено: {profileCompletion}%. Завершите каждую секцию для 100%.</p>
+                    <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {stepCompletions.map(({ step: stepNum, label: stepLabel, completion: stepPct }) => (
+                            <Link
+                                key={stepNum}
+                                href={`/app/portfolio?step=${stepNum}`}
+                                className={`relative block rounded-xl border p-5 transition-all hover:shadow-md ${
+                                    stepPct === 100 ? "border-emerald-200 bg-emerald-50/30" : "border-gray-200 hover:border-emerald-200"
+                                }`}
+                            >
+                                <div className="flex items-start justify-between gap-2">
+                                    <h3 className="text-sm font-semibold text-gray-800">{stepLabel}</h3>
+                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white">
+                                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </span>
+                                </div>
+                                <div className="mt-4 flex justify-center">
+                                    <div
+                                        className={`relative flex h-20 w-20 items-center justify-center rounded-full ${
+                                            stepPct === 100 ? "bg-emerald-500" : "border-2 border-gray-200 bg-gray-50"
+                                        }`}
+                                    >
+                                        <svg className="absolute inset-0 h-20 w-20 -rotate-90" viewBox="0 0 36 36">
+                                            <circle cx="18" cy="18" r="16" fill="none" stroke={stepPct === 100 ? "rgba(255,255,255,0.4)" : "#e5e7eb"} strokeWidth="3" />
+                                            <circle
+                                                cx="18"
+                                                cy="18"
+                                                r="16"
+                                                fill="none"
+                                                stroke={stepPct === 100 ? "#fff" : "#10b981"}
+                                                strokeWidth="3"
+                                                strokeDasharray={`${stepPct} 100`}
+                                                strokeLinecap="round"
+                                                className="transition-all duration-500"
+                                            />
+                                        </svg>
+                                        <span
+                                            className={`relative text-sm font-bold ${
+                                                stepPct === 100 ? "text-white" : stepPct > 0 ? "text-emerald-600" : "text-gray-400"
+                                            }`}
+                                        >
+                                            {stepPct}%
+                                        </span>
+                                    </div>
+                                </div>
+                                <span className="mt-3 block w-full rounded-lg border border-emerald-200 py-2 text-center text-xs font-medium text-emerald-700">
+                                    {stepPct === 100 ? "Просмотреть" : "Заполнить"}
+                                </span>
+                            </Link>
                         ))}
-                        {profileMissing.length > 8 ? (
-                            <span className="rounded-full border border-gray-300 bg-gray-50 px-3 py-1 text-xs text-gray-600">+ еще {profileMissing.length - 8}</span>
-                        ) : null}
                     </div>
-                    <Link className="mt-4 inline-flex rounded-lg bg-emerald-600 px-4 py-2 text-sm text-white" href={`/app/portfolio?step=${firstMissingStep}`}>
-                        Дополнить портфолио
-                    </Link>
+                    <p className="mt-4 text-center text-sm text-gray-500">Общий прогресс: {profileCompletion}%</p>
                 </section>
             ) : (
                 <section className="card p-5">
                     <h2 className="text-lg font-semibold">Профиль заполнен</h2>
                     <p className="mt-2 text-sm text-emerald-700">Отлично: у вас 100% заполнения портфолио.</p>
+                    <Link className="mt-3 inline-flex rounded-lg border border-emerald-300 px-4 py-2 text-sm" href="/app/portfolio">
+                        Редактировать портфолио
+                    </Link>
                 </section>
             )}
 

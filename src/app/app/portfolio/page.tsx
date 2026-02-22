@@ -187,6 +187,37 @@ function getMissingFields(form: PortfolioState): MissingField[] {
     return missing;
 }
 
+const STEP_LABELS: Record<number, string> = {
+    1: "Basic Info",
+    2: "Education",
+    3: "Skills",
+    4: "Certifications",
+    5: "Experience",
+    6: "Achievements",
+    7: "Optional",
+};
+
+const STEP_REQUIRED_COUNTS: Record<number, number> = {
+    1: 10,
+    2: 5,
+    3: 2,
+    4: 2,
+    5: 4,
+    6: 2,
+    7: 3,
+};
+
+function getStepCompletions(form: PortfolioState, missingFields: MissingField[]) {
+    return steps.map((label, index) => {
+        const stepNum = index + 1;
+        const required = STEP_REQUIRED_COUNTS[stepNum] ?? 1;
+        const missing = missingFields.filter((m) => m.step === stepNum).length;
+        const filled = required - missing;
+        const completion = Math.min(100, Math.round((filled / required) * 100));
+        return { step: stepNum, label, completion };
+    });
+}
+
 function buildProfilePayload(form: PortfolioState) {
     const firstEducation = form.education[0];
     const project = form.projects[0];
@@ -310,6 +341,7 @@ export default function PortfolioPage() {
         const totalRequired = 27;
         return Math.round(((totalRequired - missingFields.length) / totalRequired) * 100);
     }, [missingFields.length]);
+    const stepCompletions = useMemo(() => getStepCompletions(form, missingFields), [form, missingFields]);
 
     function persistDraft(next: PortfolioState) {
         setForm(next);
@@ -377,25 +409,69 @@ export default function PortfolioPage() {
             <section className="card p-6">
                 <h1 className="text-2xl font-bold">Портфолио студента</h1>
                 <p className="mt-2 text-sm text-gray-600">
-                    Заполните профиль по шагам. Все повторяющиеся блоки добавляются динамически через + Add More.
+                    Заполните каждую секцию, чтобы двигаться дальше. Все повторяющиеся блоки добавляются через + Add More.
                 </p>
-                <p className="mt-3 text-sm font-medium text-emerald-700">Completion: {completion}%</p>
-                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-emerald-100"><div className="h-full bg-emerald-600 transition-all duration-500 ease-out" style={{ width: `${completion}%` }} /></div>
-            </section>
-
-            <section className="card p-4">
-                <div className="flex flex-wrap gap-2">
-                    {steps.map((label, index) => (
-                        <button
-                            className={`rounded-lg px-3 py-2 text-sm ${step === index + 1 ? "bg-emerald-600 text-white" : "bg-emerald-50"}`}
-                            key={label}
-                            onClick={() => setStep(index + 1)}
-                            type="button"
+                <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {stepCompletions.map(({ step: stepNum, label: stepLabel, completion: stepPct }) => (
+                        <article
+                            key={stepNum}
+                            className={`relative rounded-xl border p-5 transition-all ${
+                                step === stepNum ? "border-emerald-400 bg-emerald-50/50 shadow-sm" : "border-gray-200 hover:border-emerald-200 hover:bg-gray-50/50"
+                            }`}
                         >
-                            Step {index + 1}
-                        </button>
+                            <div className="flex items-start justify-between gap-2">
+                                <h3 className="text-sm font-semibold text-gray-800">{stepLabel}</h3>
+                                <button
+                                    type="button"
+                                    onClick={() => setStep(stepNum)}
+                                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white transition hover:bg-emerald-700"
+                                    aria-label={`Перейти к шагу ${stepNum}`}
+                                >
+                                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div className="mt-4 flex justify-center">
+                                <div
+                                    className={`relative flex h-20 w-20 items-center justify-center rounded-full ${
+                                        stepPct === 100 ? "bg-emerald-500" : "border-2 border-gray-200 bg-gray-50"
+                                    }`}
+                                >
+                                    <svg className="absolute inset-0 h-20 w-20 -rotate-90" viewBox="0 0 36 36">
+                                        <circle cx="18" cy="18" r="16" fill="none" stroke={stepPct === 100 ? "rgba(255,255,255,0.4)" : "#e5e7eb"} strokeWidth="3" />
+                                        <circle
+                                            cx="18"
+                                            cy="18"
+                                            r="16"
+                                            fill="none"
+                                            stroke={stepPct === 100 ? "#fff" : "#10b981"}
+                                            strokeWidth="3"
+                                            strokeDasharray={`${stepPct} 100`}
+                                            strokeLinecap="round"
+                                            className="transition-all duration-500"
+                                        />
+                                    </svg>
+                                    <span
+                                        className={`relative text-sm font-bold ${
+                                            stepPct === 100 ? "text-white" : stepPct > 0 ? "text-emerald-600" : "text-gray-400"
+                                        }`}
+                                    >
+                                        {stepPct}%
+                                    </span>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setStep(stepNum)}
+                                className="mt-3 w-full rounded-lg border border-emerald-200 py-2 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50"
+                            >
+                                {stepPct === 100 ? "Просмотреть" : "Заполнить"}
+                            </button>
+                        </article>
                     ))}
                 </div>
+                <p className="mt-4 text-center text-sm text-gray-500">Общий прогресс: {completion}%</p>
             </section>
 
             <section className="card p-6 space-y-4">
