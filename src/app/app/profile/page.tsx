@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { LANGUAGE_KEY } from "@/components/auto-translator";
 import { THEME_KEY, type ThemeMode } from "@/components/theme-controller";
+import { fileToDataUrl } from "@/lib/imageUtils";
 
 type AccountPayload = {
     _id: string;
@@ -15,15 +16,6 @@ type AccountPayload = {
     preferredLanguage: string;
     themeMode: ThemeMode;
 };
-
-async function fileToDataUrl(file: File) {
-    return await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result ?? ""));
-        reader.onerror = () => reject(new Error("Failed to read image"));
-        reader.readAsDataURL(file);
-    });
-}
 
 export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
@@ -90,8 +82,8 @@ export default function ProfilePage() {
         return `${f}${l}`.trim() || "S";
     }, [firstName, lastName]);
 
-    async function saveAccount(options?: { avatarUrlOverride?: string; successMessage?: string }) {
-        if (saving) return;
+    async function saveAccount(options?: { avatarUrlOverride?: string; successMessage?: string }): Promise<{ ok: boolean; avatarUrl?: string }> {
+        if (saving) return { ok: false };
         setSaving(true);
         setStatus("");
 
@@ -110,11 +102,11 @@ export default function ProfilePage() {
                 }),
             });
 
-            const payload = (await response.json()) as { error?: string };
+            const payload = (await response.json()) as { error?: string; data?: AccountPayload };
 
             if (!response.ok) {
                 setStatus(payload.error ?? "Failed to update profile settings");
-                return;
+                return { ok: false };
             }
 
             localStorage.setItem(LANGUAGE_KEY, preferredLanguage);
@@ -123,8 +115,10 @@ export default function ProfilePage() {
             window.dispatchEvent(new Event("gp:theme-change"));
 
             setStatus(options?.successMessage ?? "Profile settings saved");
+            return { ok: true, avatarUrl: payload.data?.avatarUrl };
         } catch {
             setStatus("Network error while saving settings");
+            return { ok: false };
         } finally {
             setSaving(false);
         }
@@ -218,9 +212,18 @@ export default function ProfilePage() {
                         onChange={async (event) => {
                             const file = event.target.files?.[0];
                             if (!file) return;
-                            const imageData = await fileToDataUrl(file);
-                            setAvatarUrl(imageData);
-                            void saveAccount({ avatarUrlOverride: imageData, successMessage: "Аватар сохранен" });
+                            try {
+                                const imageData = await fileToDataUrl(file, { maxSize: 300 });
+                                setAvatarUrl(imageData);
+                                const result = await saveAccount({ avatarUrlOverride: imageData, successMessage: "Аватар сохранен" });
+                                if (result.ok && result.avatarUrl !== undefined) {
+                                    setAvatarUrl(result.avatarUrl);
+                                }
+                            } catch {
+                                setStatus("Ошибка при загрузке изображения");
+                            } finally {
+                                event.target.value = "";
+                            }
                         }}
                         type="file"
                     />

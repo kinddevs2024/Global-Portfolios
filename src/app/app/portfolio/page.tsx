@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { fileToDataUrl } from "@/lib/imageUtils";
 
 type Education = {
     institutionName: string;
@@ -142,15 +143,6 @@ function pickGpa(serverValue: unknown, currentValue: string) {
         return String(serverValue);
     }
     return currentValue;
-}
-
-async function fileToDataUrl(file: File) {
-    return await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result ?? ""));
-        reader.onerror = () => reject(new Error("Failed to read file"));
-        reader.readAsDataURL(file);
-    });
 }
 
 function getMissingFields(form: PortfolioState): MissingField[] {
@@ -440,10 +432,14 @@ export default function PortfolioPage() {
                                     onChange={async (event) => {
                                         const file = event.target.files?.[0];
                                         if (!file) return;
-                                        const imageData = await fileToDataUrl(file);
-                                        const nextForm = { ...form, profilePhoto: imageData };
-                                        persistDraft(nextForm);
-                                        void saveToPlatform(nextForm, "Изображение сохранено");
+                                        try {
+                                            const imageData = await fileToDataUrl(file, { maxSize: 500 });
+                                            const nextForm = { ...form, profilePhoto: imageData };
+                                            persistDraft(nextForm);
+                                            await saveToPlatform(nextForm, "Изображение сохранено");
+                                        } finally {
+                                            event.target.value = "";
+                                        }
                                     }}
                                     type="file"
                                 />
@@ -526,26 +522,32 @@ export default function PortfolioPage() {
                                     <input className="rounded-lg border border-emerald-200 px-3 py-2" type="date" value={item.issueDate} onChange={(e) => persistDraft({ ...form, certifications: updateArrayItem(form.certifications, index, { issueDate: e.target.value }) })} />
                                     <input className="rounded-lg border border-emerald-200 px-3 py-2" type="date" value={item.expirationDate} onChange={(e) => persistDraft({ ...form, certifications: updateArrayItem(form.certifications, index, { expirationDate: e.target.value }) })} />
                                     <input className="rounded-lg border border-emerald-200 px-3 py-2" placeholder="Verification Link" value={item.verificationLink} onChange={(e) => persistDraft({ ...form, certifications: updateArrayItem(form.certifications, index, { verificationLink: e.target.value }) })} />
-                                    <input
+                                    {item.imageUrl ? (
+                                        <div
+                                            className="h-20 w-full rounded-lg border border-emerald-100 bg-cover bg-center md:col-span-2"
+                                            style={{ backgroundImage: `url(${item.imageUrl})` }}
+                                        />
+                                    ) : null}
+                                    <div className="flex flex-col gap-1 md:col-span-2">
+                                        <label className="text-sm font-medium">Изображение сертификата</label>
+                                        <input
                                         accept="image/*"
                                         className="rounded-lg border border-emerald-200 px-3 py-2"
                                         onChange={async (event) => {
                                             const file = event.target.files?.[0];
                                             if (!file) return;
-                                            const imageData = await fileToDataUrl(file);
-                                            const nextForm = { ...form, certifications: updateArrayItem(form.certifications, index, { imageUrl: imageData }) };
-                                            persistDraft(nextForm);
-                                            void saveToPlatform(nextForm, "Изображение сертификата сохранено");
+                                            try {
+                                                const imageData = await fileToDataUrl(file, { maxSize: 500 });
+                                                const nextForm = { ...form, certifications: updateArrayItem(form.certifications, index, { imageUrl: imageData }) };
+                                                persistDraft(nextForm);
+                                                await saveToPlatform(nextForm, "Изображение сертификата сохранено");
+                                            } finally {
+                                                event.target.value = "";
+                                            }
                                         }}
                                         type="file"
                                     />
-                                    {item.imageUrl ? (
-                                        <div
-                                            className="h-20 w-full rounded-lg border border-emerald-100 bg-cover bg-center md:col-span-2"
-                                            style={{ backgroundImage: `url(${item.imageUrl})` }}
-                                        >
-                                        </div>
-                                    ) : null}
+                                    </div>
                                 </div>
                             ))}
                             <button className="rounded-lg border border-emerald-300 px-3 py-2 text-sm" onClick={() => persistDraft({ ...form, certifications: [...form.certifications, { name: "", organization: "", issueDate: "", expirationDate: "", score: "", verificationLink: "", imageUrl: "" }] })} type="button">+ Add More Certification</button>
