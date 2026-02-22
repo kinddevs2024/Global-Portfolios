@@ -12,6 +12,7 @@ type UniversityInfo = {
     numberOfStudents?: number | null;
     logoShort?: string;
     logoLong?: string;
+    outreachMessage?: string;
 };
 
 const TABS = [
@@ -34,8 +35,9 @@ export default function UniversityProfilePage() {
             try {
                 const res = await fetch("/api/university/profile");
                 if (res.ok) {
-                    const payload = (await res.json()) as { data?: { universityInfo?: UniversityInfo } };
+                    const payload = (await res.json()) as { data?: { universityInfo?: UniversityInfo; outreachMessage?: string } };
                     const info = payload.data?.universityInfo ?? {};
+                    const root = payload.data ?? {};
                     setForm({
                         name: info.name ?? "",
                         country: info.country ?? "",
@@ -44,6 +46,7 @@ export default function UniversityProfilePage() {
                         numberOfStudents: info.numberOfStudents ?? null,
                         logoShort: info.logoShort ?? "",
                         logoLong: info.logoLong ?? "",
+                        outreachMessage: root.outreachMessage ?? "",
                     });
                 }
             } catch {
@@ -62,7 +65,10 @@ export default function UniversityProfilePage() {
             const res = await fetch("/api/university/profile", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(form),
+                body: JSON.stringify({
+                    ...form,
+                    outreachMessage: form.outreachMessage ?? "",
+                }),
             });
             const payload = (await res.json()) as { error?: string };
             if (res.ok) {
@@ -185,6 +191,17 @@ export default function UniversityProfilePage() {
                             value={form.tagline ?? ""}
                             onChange={(e) => setForm((f) => ({ ...f, tagline: e.target.value }))}
                             placeholder="Enter your University motto"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="mb-1 block text-sm font-medium">Стандартное сообщение при отклике студенту</label>
+                        <p className="mb-2 text-xs text-gray-500">Это сообщение можно использовать при инициативе отклика к студенту (опционально)</p>
+                        <textarea
+                            className="min-h-[100px] w-full rounded-xl border border-amber-200 px-3 py-2"
+                            value={form.outreachMessage ?? ""}
+                            onChange={(e) => setForm((f) => ({ ...f, outreachMessage: e.target.value }))}
+                            placeholder="Например: Здравствуйте! Мы заинтересованы вашим профилем и хотели бы обсудить возможности..."
                         />
                     </div>
 

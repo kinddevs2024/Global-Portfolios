@@ -30,6 +30,7 @@ const universitySchema = new Schema(
             profileViews: { type: Number, default: 0 },
             invitesSent: { type: Number, default: 0 },
         },
+        outreachMessage: { type: String, default: "" },
     },
     { timestamps: true },
 );

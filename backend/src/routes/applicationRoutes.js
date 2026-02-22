@@ -3,6 +3,7 @@ const express = require('express');
 const {
   applyToUniversity,
   inviteStudent,
+  inviteStudentByUserId,
   getMyApplications,
   getReceivedApplications,
   updateApplicationStatus,
@@ -13,6 +14,7 @@ const { validateBody } = require('../middleware/validationMiddleware');
 const {
   applicationApplySchema,
   applicationInviteSchema,
+  applicationInviteByUserSchema,
   applicationStatusSchema,
 } = require('../validation/schemas');
 
@@ -24,6 +26,7 @@ router.post('/apply', roleMiddleware('student'), validateBody(applicationApplySc
 router.get('/my-applications', roleMiddleware('student'), getMyApplications);
 
 router.post('/invite', roleMiddleware('university'), validateBody(applicationInviteSchema), inviteStudent);
+router.post('/invite-by-user', roleMiddleware('university'), validateBody(applicationInviteByUserSchema), inviteStudentByUserId);
 router.get('/received', roleMiddleware('university'), getReceivedApplications);
 
 router.patch(

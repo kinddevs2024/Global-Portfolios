@@ -26,6 +26,7 @@ export async function updateUniversityProfile(
         numberOfStudents?: number;
         logoShort?: string;
         logoLong?: string;
+        outreachMessage?: string;
     },
 ) {
     await connectToDatabase();
@@ -38,6 +39,7 @@ export async function updateUniversityProfile(
     if (data.numberOfStudents !== undefined) university.universityInfo.numberOfStudents = data.numberOfStudents;
     if (data.logoShort !== undefined) university.universityInfo.logoShort = data.logoShort;
     if (data.logoLong !== undefined) university.universityInfo.logoLong = data.logoLong;
+    if (data.outreachMessage !== undefined) (university as { outreachMessage?: string }).outreachMessage = data.outreachMessage;
     await university.save();
     return university.toObject ? university.toObject() : university;
 }

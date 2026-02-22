@@ -30,7 +30,10 @@ export default function AppLayoutClient({ children }: { children: React.ReactNod
                         Профиль
                     </Link>
                     <Link className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-emerald-50" href="/app/applications">
-                        Подать заявки
+                        Университеты и интересы
+                    </Link>
+                    <Link className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-emerald-50" href="/app/chats">
+                        Чаты
                     </Link>
                 </nav>
             </aside>

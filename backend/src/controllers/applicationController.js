@@ -89,6 +89,65 @@ const applyToUniversity = async (req, res, next) => {
   }
 };
 
+const inviteStudentByUserId = async (req, res, next) => {
+  try {
+    const { targetUserId, message } = req.body;
+
+    if (!targetUserId || !isValidObjectId(targetUserId)) {
+      return res.status(400).json({ message: 'targetUserId is required' });
+    }
+
+    const universityProfile = await UniversityProfile.findOne({ userId: req.user.userId });
+    if (!universityProfile) {
+      return res.status(400).json({ message: 'University profile is required before inviting' });
+    }
+
+    let studentProfile = await StudentProfile.findOne({ userId: targetUserId });
+    if (!studentProfile) {
+      studentProfile = await StudentProfile.create({ userId: targetUserId });
+    }
+
+    const application = await Application.create({
+      fromStudent: studentProfile._id,
+      toUniversity: universityProfile._id,
+      initiatedBy: 'university',
+      message: message || '',
+      status: 'pending',
+    });
+
+    await createNotification({
+      userId: studentProfile.userId,
+      type: 'application',
+      relatedId: application._id,
+    });
+
+    emitToUsers([studentProfile.userId, universityProfile.userId], 'application:update', {
+      applicationId: application._id,
+      status: application.status,
+      initiatedBy: application.initiatedBy,
+    });
+
+    await trackActivity({
+      userId: universityProfile.userId,
+      action: 'application.created',
+      relatedId: application._id,
+      metadata: { initiatedBy: 'university' },
+    });
+
+    await logAudit({
+      userId: req.user.userId,
+      action: 'application.created',
+      targetType: 'Application',
+      targetId: application._id,
+      metadata: { initiatedBy: 'university' },
+    });
+
+    return res.status(201).json({ application, studentUserId: studentProfile.userId });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 const inviteStudent = async (req, res, next) => {
   try {
     const { studentId, message } = req.body;
@@ -303,6 +362,7 @@ const updateApplicationStatus = async (req, res, next) => {
 module.exports = {
   applyToUniversity,
   inviteStudent,
+  inviteStudentByUserId,
   getMyApplications,
   getReceivedApplications,
   updateApplicationStatus,

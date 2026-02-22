@@ -2,6 +2,7 @@ const {
   startConversation,
   getUserConversations,
   getConversationMessages,
+  sendMessage,
 } = require('../services/chatService');
 
 const startChatConversation = async (req, res, next) => {
@@ -50,8 +51,24 @@ const listConversationMessages = async (req, res, next) => {
   }
 };
 
+const sendChatMessage = async (req, res, next) => {
+  try {
+    const { text } = req.body;
+    const message = await sendMessage({
+      conversationId: req.params.conversationId,
+      senderUserId: req.user.userId,
+      text,
+      attachments: [],
+    });
+    return res.status(201).json(message);
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   startChatConversation,
   listConversations,
   listConversationMessages,
+  sendChatMessage,
 };

@@ -25,6 +25,11 @@ const applicationInviteSchema = z.object({
   message: z.string().max(1000).optional(),
 });
 
+const applicationInviteByUserSchema = z.object({
+  targetUserId: z.string().length(24),
+  message: z.string().max(5000).optional(),
+});
+
 const applicationStatusSchema = z.object({
   status: z.enum(['accepted', 'rejected', 'withdrawn']),
 });
@@ -41,6 +46,10 @@ const accessRespondSchema = z.object({
 const chatStartSchema = z.object({
   participantUserId: z.string().length(24),
   relatedApplication: z.string().length(24).optional(),
+});
+
+const chatMessageSchema = z.object({
+  text: z.string().min(1).max(5000),
 });
 
 const adminVerifyUserSchema = z.object({
@@ -60,7 +69,9 @@ module.exports = {
   refreshSchema,
   applicationApplySchema,
   applicationInviteSchema,
+  applicationInviteByUserSchema,
   applicationStatusSchema,
+  chatMessageSchema,
   accessRequestSchema,
   accessRespondSchema,
   chatStartSchema,

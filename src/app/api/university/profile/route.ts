@@ -11,6 +11,7 @@ const updateSchema = z.object({
     numberOfStudents: z.number().int().min(0).optional().nullable(),
     logoShort: z.string().trim().optional(),
     logoLong: z.string().trim().optional(),
+    outreachMessage: z.string().trim().max(5000).optional(),
 });
 
 export async function GET() {
@@ -37,6 +38,7 @@ export async function PUT(request: Request) {
             numberOfStudents: body.numberOfStudents ?? undefined,
             logoShort: body.logoShort,
             logoLong: body.logoLong,
+            outreachMessage: body.outreachMessage,
         });
         return NextResponse.json({ data: university });
     } catch (error) {
