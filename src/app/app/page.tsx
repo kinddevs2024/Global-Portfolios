@@ -195,7 +195,12 @@ export default function AppHomePage() {
                 }
 
                 const mePayload = (await meRes.json()) as { data: SessionUser };
-                setUser(mePayload.data);
+                const u = mePayload.data;
+                setUser(u);
+                if (u.role === "university") {
+                    window.location.assign("/app/university/dashboard");
+                    return;
+                }
 
                 if (applicationsRes.ok) {
                     const payload = (await applicationsRes.json()) as { items?: ApplicationItem[] };

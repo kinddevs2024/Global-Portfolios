@@ -7,6 +7,11 @@ const universitySchema = new Schema(
             name: { type: String, required: true },
             country: { type: String, required: true },
             verifiedStatus: { type: Boolean, default: false },
+            tagline: { type: String, default: "" },
+            yearEstablished: { type: Number, default: null },
+            numberOfStudents: { type: Number, default: null },
+            logoShort: { type: String, default: "" },
+            logoLong: { type: String, default: "" },
         },
         programs: [{ name: String, level: String, language: String }],
         requirements: {
