@@ -47,6 +47,7 @@ export async function POST(request: Request) {
                 throw networkError;
             }
 
+            // Fallback: local DB login only. Never create a user here — login is login, not register.
             const { user, token } = await loginUser(body.email, body.password);
             const fallbackResponse = NextResponse.json({
                 user: {
@@ -77,7 +78,11 @@ export async function POST(request: Request) {
 
         if (!backendResponse.ok) {
             const message = await parseBackendErrorMessage(backendResponse, "Неверный email или пароль");
-            return NextResponse.json({ error: message }, { status: backendResponse.status });
+            const err = message.toLowerCase();
+            const hint = (backendResponse.status === 401 && (err.includes("invalid") || err.includes("credentials")))
+                ? " Если вы ещё не регистрировались, перейдите в Регистрация."
+                : "";
+            return NextResponse.json({ error: message + hint }, { status: backendResponse.status });
         }
 
         const result = (await backendResponse.json()) as {
@@ -117,7 +122,9 @@ export async function POST(request: Request) {
         }
 
         if (error instanceof Error && error.message === "Invalid credentials") {
-            return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+            return NextResponse.json({
+                error: "Неверный email или пароль. Если вы ещё не регистрировались, перейдите в Регистрация.",
+            }, { status: 401 });
         }
 
         if (error instanceof Error && error.message.startsWith("Please verify your email")) {

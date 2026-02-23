@@ -58,7 +58,7 @@ export default function UniversityDashboardPage() {
     }, []);
 
     if (loading) {
-        return <div className="rounded-2xl border border-amber-200 bg-white p-8">Загрузка...</div>;
+        return <div className="rounded-2xl border border-emerald-200 bg-white p-8">Загрузка...</div>;
     }
 
     const uni = data?.university;
@@ -67,17 +67,17 @@ export default function UniversityDashboardPage() {
 
     return (
         <div className="mx-auto max-w-6xl space-y-6">
-            <h1 className="text-2xl font-bold text-amber-900">Dashboard</h1>
+            <h1 className="text-2xl font-bold text-emerald-900">Dashboard</h1>
 
             <div className="grid gap-6 lg:grid-cols-3">
-                <section className="lg:col-span-2 overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700 p-6 text-white shadow-xl">
+                <section className="lg:col-span-2 overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-700 p-6 text-white shadow-xl">
                     <h2 className="text-xl font-bold">
-                        Welcome, <span className="text-amber-100">{uni?.universityInfo?.name ?? "University"}</span>!
+                        Welcome, <span className="text-emerald-100">{uni?.universityInfo?.name ?? "University"}</span>!
                     </h2>
-                    <p className="mt-2 text-amber-100/90">Manage applications and discover top students.</p>
+                    <p className="mt-2 text-emerald-100/90">Manage applications and discover top students.</p>
                     <Link
                         href="/app/university/discovery"
-                        className="mt-4 inline-block rounded-xl bg-white px-4 py-2 text-sm font-semibold text-amber-800 transition hover:bg-amber-50"
+                        className="mt-4 inline-block rounded-xl bg-white px-4 py-2 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-50"
                     >
                         Boost Enrollment
                     </Link>
@@ -86,33 +86,33 @@ export default function UniversityDashboardPage() {
                     </div>
                 </section>
 
-                <section className="rounded-2xl border border-amber-200 bg-white p-6 shadow-sm">
-                    <h2 className="text-base font-semibold text-amber-900">
-                        Profile progress: <span className="text-amber-600">{progress}%</span>
+                <section className="rounded-2xl border border-emerald-200 bg-white p-6 shadow-sm">
+                    <h2 className="text-base font-semibold text-emerald-900">
+                        Profile progress: <span className="text-emerald-600">{progress}%</span>
                     </h2>
                     <p className="mt-1 text-sm text-gray-600">Complete your University Profile for students to view.</p>
                     <Link
                         href="/app/university/profile"
-                        className="mt-4 inline-block rounded-xl bg-amber-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-amber-600"
+                        className="mt-4 inline-block rounded-xl bg-emerald-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-600"
                     >
                         Complete your Profile
                     </Link>
                     <div className="mt-4 flex justify-end">
                         <div className="relative h-20 w-20">
                             <svg className="h-20 w-20 -rotate-90" viewBox="0 0 36 36">
-                                <circle cx="18" cy="18" r="16" fill="none" stroke="#fef3c7" strokeWidth="3" />
+                                <circle cx="18" cy="18" r="16" fill="none" stroke="#d1fae5" strokeWidth="3" />
                                 <circle
                                     cx="18"
                                     cy="18"
                                     r="16"
                                     fill="none"
-                                    stroke="#f59e0b"
+                                    stroke="#059669"
                                     strokeWidth="3"
                                     strokeDasharray={`${progress} 100`}
                                     strokeLinecap="round"
                                 />
                             </svg>
-                            <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-amber-600">
+                            <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-emerald-600">
                                 {progress}%
                             </span>
                         </div>
@@ -120,13 +120,13 @@ export default function UniversityDashboardPage() {
                 </section>
             </div>
 
-            <section className="rounded-2xl border border-amber-200 bg-white p-6 shadow-sm">
+            <section className="rounded-2xl border border-emerald-200 bg-white p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h2 className="text-lg font-semibold text-amber-900">Featured Student Profiles</h2>
+                        <h2 className="text-lg font-semibold text-emerald-900">Featured Student Profiles</h2>
                         <p className="mt-1 text-sm text-gray-600">Profiles with strong engagement and interest.</p>
                     </div>
-                    <Link href="/app/university/discovery" className="text-sm font-medium text-amber-600 hover:text-amber-700">
+                    <Link href="/app/university/discovery" className="text-sm font-medium text-emerald-600 hover:text-emerald-700">
                         View all students →
                     </Link>
                 </div>
@@ -137,14 +137,14 @@ export default function UniversityDashboardPage() {
                             <Link
                                 key={s._id}
                                 href={`/app/university/discovery?student=${s._id}`}
-                                className="flex shrink-0 flex-col items-center gap-2 rounded-xl p-3 transition hover:bg-amber-50"
+                                className="flex shrink-0 flex-col items-center gap-2 rounded-xl p-3 transition hover:bg-emerald-50"
                             >
-                                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-amber-300 to-amber-500 text-xl font-bold text-white">
+                                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-emerald-300 to-emerald-500 text-xl font-bold text-white">
                                     {name.charAt(0)}
                                 </div>
-                                <p className="max-w-[100px] truncate text-center text-sm font-medium text-amber-900">{name}</p>
+                                <p className="max-w-[100px] truncate text-center text-sm font-medium text-emerald-900">{name}</p>
                                 {s.rankingTier && (
-                                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">{s.rankingTier}</span>
+                                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800">{s.rankingTier}</span>
                                 )}
                             </Link>
                         );
