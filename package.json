@@ -9,6 +9,7 @@
     "start": "next start -p 3005",
     "lint": "eslint",
     "seed:universities": "node backend/scripts/seedFakeUniversities.js",
+    "seed:admin": "node scripts/seedAdmin.js",
     "backend:dev": "nodemon --watch backend/src --ext js,json --ignore .next --ignore node_modules backend/src/server.js",
     "backend:start": "node backend/src/server.js"
   },
