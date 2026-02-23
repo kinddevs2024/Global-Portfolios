@@ -17,8 +17,8 @@ export default function AdminUserDetailPage() {
     const router = useRouter();
     const id = params.id as string;
     const [user, setUser] = useState<UserData | null>(null);
-    const [portfolio, setPortfolio] = useState<unknown>(null);
-    const [university, setUniversity] = useState<unknown>(null);
+    const [portfolio, setPortfolio] = useState<object | null>(null);
+    const [university, setUniversity] = useState<object | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [deleting, setDeleting] = useState(false);
@@ -50,13 +50,13 @@ export default function AdminUserDetailPage() {
 
             if (portfolioRes.ok) {
                 const p = (await portfolioRes.json()) as { data?: unknown };
-                setPortfolio(p.data ?? null);
+                setPortfolio(typeof p.data === "object" && p.data !== null ? p.data : null);
             } else {
                 setPortfolio(null);
             }
             if (universityRes.ok) {
                 const u = (await universityRes.json()) as { data?: unknown };
-                setUniversity(u.data ?? null);
+                setUniversity(typeof u.data === "object" && u.data !== null ? u.data : null);
             } else {
                 setUniversity(null);
             }
