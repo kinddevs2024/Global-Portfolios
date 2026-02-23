@@ -106,13 +106,12 @@ export async function POST(request: Request) {
 
             try {
                 const { user, verificationToken } = await registerUser(email, password, role);
-                let baseUrl = process.env.NEXT_PUBLIC_APP_URL;
-                if (!baseUrl) {
-                    try {
-                        baseUrl = new URL(request.url).origin;
-                    } catch {
-                        baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3005";
-                    }
+                // Use the same URL the user has in the browser (IP or domain), so the link in the email opens correctly
+                let baseUrl: string;
+                try {
+                    baseUrl = new URL(request.url).origin;
+                } catch {
+                    baseUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3005");
                 }
                 await sendVerificationEmail(email, verificationToken, baseUrl);
 

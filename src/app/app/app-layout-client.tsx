@@ -16,26 +16,46 @@ export default function AppLayoutClient({ children }: { children: React.ReactNod
         );
     }
 
+    const path = pathname ?? "";
+    const navItems = [
+        { href: "/app", label: "Dashboard", icon: "▦" },
+        { href: "/app/applications", label: "Application", icon: "▤" },
+        { href: "/app/offers", label: "Offers", icon: "◫" },
+        { href: "/app/explore", label: "Explore Universities", icon: "▥" },
+        { href: "/app/compare", label: "Compare Universities", icon: "⬡" },
+    ];
+
     return (
         <div className="mx-auto grid w-full max-w-7xl gap-6 px-6 py-6 md:grid-cols-[240px_1fr] md:px-10">
             <aside className="card h-fit p-3">
-                <nav className="space-y-2">
-                    <Link className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-emerald-50" href="/app">
-                        Главная платформы
-                    </Link>
-                    <Link className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-emerald-50" href="/app/portfolio">
+                <nav className="space-y-1">
+                    {navItems.map((item) => {
+                        const isActive = path === item.href || (item.href !== "/app" && path.startsWith(item.href));
+                        return (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+                                    isActive ? "bg-emerald-600 text-white" : "hover:bg-emerald-50 text-gray-700"
+                                }`}
+                            >
+                                <span className="opacity-80">{item.icon}</span>
+                                {item.label}
+                            </Link>
+                        );
+                    })}
+                </nav>
+                <div className="mt-4 border-t border-gray-200 pt-3 space-y-1">
+                    <Link className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100" href="/app/portfolio">
                         Портфолио
                     </Link>
-                    <Link className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-emerald-50" href="/app/profile">
+                    <Link className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100" href="/app/profile">
                         Профиль
                     </Link>
-                    <Link className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-emerald-50" href="/app/applications">
-                        Университеты и интересы
-                    </Link>
-                    <Link className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-emerald-50" href="/app/chats">
+                    <Link className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100" href="/app/chats">
                         Чаты
                     </Link>
-                </nav>
+                </div>
             </aside>
             <main>{children}</main>
         </div>

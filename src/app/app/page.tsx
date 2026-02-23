@@ -45,7 +45,6 @@ const STEP_LABELS: Record<number, string> = {
     2: "Education",
     3: "Skills",
     4: "Certifications",
-    5: "Experience",
     6: "Achievements",
     7: "Optional",
 };
@@ -55,7 +54,6 @@ const STEP_REQUIRED_COUNTS: Record<number, number> = {
     2: 5,
     3: 2,
     4: 2,
-    5: 4,
     6: 2,
     7: 3,
 };
@@ -85,12 +83,13 @@ function getStepForMissingLabel(label: string): number {
 }
 
 function getStepCompletionsFromMissing(missing: string[]) {
-    const missingByStep: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0 };
+    const missingByStep: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 6: 0, 7: 0 };
     for (const label of missing) {
         const s = getStepForMissingLabel(label);
+        if (s === 5) continue;
         missingByStep[s] = (missingByStep[s] ?? 0) + 1;
     }
-    return [1, 2, 3, 4, 5, 6, 7].map((stepNum) => {
+    return [1, 2, 3, 4, 6, 7].map((stepNum) => {
         const required = STEP_REQUIRED_COUNTS[stepNum] ?? 1;
         const missingCount = missingByStep[stepNum] ?? 0;
         const filled = required - missingCount;
@@ -255,13 +254,57 @@ export default function AppHomePage() {
     const skills = (profile?.skills ?? []).map((item) => item.name).filter(Boolean).slice(0, 6) as string[];
     const recommendation = profile?.aiAnalysis?.recommendation ?? "Заполните портфолио полностью, чтобы получить персональные рекомендации.";
     const stepCompletions = getStepCompletionsFromMissing(profileMissing);
+    const skillsStep = stepCompletions.find((s) => s.step === 3);
+    const skillsPct = skillsStep?.completion ?? 0;
 
     return (
         <div className="space-y-6">
             <section className="card p-6">
-                <h1 className="text-2xl font-bold">Кабинет студента</h1>
-                <p className="mt-1 text-sm text-gray-600">{user.email} · role: {user.role}</p>
-                <p className="mt-3 text-sm text-gray-700">Здесь вы видите новые заявки, письма, рейтинг, навыки и персональные рекомендации.</p>
+                <h1 className="text-2xl font-bold">Dashboard</h1>
+                <p className="mt-1 text-sm text-gray-600">{user.email}</p>
+                <p className="mt-3 text-sm text-gray-700">Заявки, университеты, рейтинг и рекомендации.</p>
+            </section>
+
+            <section className="grid gap-4 sm:grid-cols-2">
+                <div className="card overflow-hidden p-5">
+                    <div className="flex items-start justify-between gap-2">
+                        <h2 className="text-lg font-semibold text-gray-800">Skills</h2>
+                        <Link
+                            href="/app/portfolio?step=3"
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white transition hover:bg-emerald-700"
+                            aria-label="Открыть раздел Skills"
+                        >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                        </Link>
+                    </div>
+                    <div className="mt-4 flex justify-center">
+                        <div className="relative flex h-24 w-24 items-center justify-center">
+                            <svg className="absolute h-24 w-24 -rotate-90" viewBox="0 0 36 36">
+                                <circle cx="18" cy="18" r="16" fill="none" stroke="#e5e7eb" strokeWidth="3" />
+                                <circle
+                                    cx="18"
+                                    cy="18"
+                                    r="16"
+                                    fill="none"
+                                    stroke="#10b981"
+                                    strokeWidth="3"
+                                    strokeDasharray={`${skillsPct} 100`}
+                                    strokeLinecap="round"
+                                    className="transition-all duration-500"
+                                />
+                            </svg>
+                            <span className="relative text-base font-bold text-gray-800">{skillsPct}%</span>
+                        </div>
+                    </div>
+                    <Link
+                        href="/app/portfolio?step=3"
+                        className="mt-4 block w-full rounded-lg border border-emerald-200 bg-white py-2.5 text-center text-sm font-medium text-gray-800 transition hover:bg-emerald-50"
+                    >
+                        {skillsPct === 100 ? "Просмотреть" : "Заполнить"}
+                    </Link>
+                </div>
             </section>
 
             {profileCompletion < 100 ? (
