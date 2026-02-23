@@ -15,7 +15,7 @@ export async function GET(_request: Request, { params }: Params) {
     const { id: userId } = await params;
     try {
         await connectToDatabase();
-        const university = await UniversityModel.findOne({ userId }).lean();
+        const university = await UniversityModel.findOne({ userId }).lean() as { _id: unknown; [key: string]: unknown } | null;
         if (!university) return NextResponse.json({ error: "University profile not found" }, { status: 404 });
         return NextResponse.json({ data: { ...university, _id: String(university._id) } });
     } catch (error) {

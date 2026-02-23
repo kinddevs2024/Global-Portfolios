@@ -15,7 +15,7 @@ export async function GET(_request: Request, { params }: Params) {
     const { id } = await params;
     try {
         await connectToDatabase();
-        const user = await UserModel.findById(id).select("-passwordHash -emailVerificationToken").lean();
+        const user = await UserModel.findById(id).select("-passwordHash -emailVerificationToken").lean() as { _id: unknown; [key: string]: unknown } | null;
         if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
         return NextResponse.json({ data: { ...user, _id: String(user._id) } });
     } catch (error) {
@@ -42,7 +42,7 @@ export async function PATCH(request: Request, { params }: Params) {
         await connectToDatabase();
         const user = await UserModel.findByIdAndUpdate(id, { role }, { new: true })
             .select("-passwordHash -emailVerificationToken")
-            .lean();
+            .lean() as { _id: unknown; [key: string]: unknown } | null;
         if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
         return NextResponse.json({ data: { ...user, _id: String(user._id) } });
     } catch (error) {
