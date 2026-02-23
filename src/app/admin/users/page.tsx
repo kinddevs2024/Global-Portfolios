@@ -34,38 +34,38 @@ export default function AdminUsersPage() {
         void load();
     }, []);
 
-    if (loading) return <div className="p-6">Loading...</div>;
+    if (loading) return <div className="p-6 text-[var(--text-muted)]">Loading...</div>;
 
     return (
-        <div className="min-h-screen px-6 py-10 md:px-12">
+        <div className="page-container min-h-screen px-4 py-6 sm:px-6 sm:py-8 md:px-10">
             <main className="mx-auto max-w-6xl space-y-6">
-                <div className="flex items-center gap-4">
-                    <Link href="/admin/dashboard" className="text-sm text-gray-600 hover:underline">← Dashboard</Link>
-                    <h1 className="text-3xl font-bold">User Management</h1>
+                <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+                    <Link href="/admin/dashboard" className="text-sm text-[var(--text-muted)] hover:text-[var(--foreground)] hover:underline">← Dashboard</Link>
+                    <h1 className="text-2xl font-bold text-[var(--foreground)] sm:text-3xl">User Management</h1>
                 </div>
 
-                <div className="card overflow-hidden">
-                    <table className="w-full text-left text-sm">
-                        <thead className="border-b bg-gray-50">
+                <div className="card overflow-x-auto overflow-y-hidden">
+                    <table className="w-full min-w-[520px] text-left text-sm">
+                        <thead className="border-b border-[var(--border)] bg-[var(--surface-soft)]">
                             <tr>
-                                <th className="p-3 font-medium">Email</th>
-                                <th className="p-3 font-medium">Role</th>
-                                <th className="p-3 font-medium">Status</th>
-                                <th className="p-3 font-medium">Created</th>
-                                <th className="p-3 font-medium">Actions</th>
+                                <th className="p-3 font-medium text-[var(--foreground)]">Email</th>
+                                <th className="p-3 font-medium text-[var(--foreground)]">Role</th>
+                                <th className="p-3 font-medium text-[var(--foreground)]">Status</th>
+                                <th className="p-3 font-medium text-[var(--foreground)]">Created</th>
+                                <th className="p-3 font-medium text-[var(--foreground)]">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {users.map((u) => (
-                                <tr key={u._id} className="border-b last:border-0">
-                                    <td className="p-3">{u.email}</td>
-                                    <td className="p-3">{u.role}</td>
-                                    <td className="p-3">{u.verificationStatus ?? "—"}</td>
-                                    <td className="p-3">{u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "—"}</td>
+                                <tr key={u._id} className="border-b border-[var(--border)] last:border-0">
+                                    <td className="p-3 text-[var(--foreground)]">{u.email}</td>
+                                    <td className="p-3 text-[var(--foreground)]">{u.role}</td>
+                                    <td className="p-3 text-[var(--text-muted)]">{u.verificationStatus ?? "—"}</td>
+                                    <td className="p-3 text-[var(--text-muted)]">{u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "—"}</td>
                                     <td className="p-3">
                                         <Link
                                             href={`/admin/users/${u._id}`}
-                                            className="text-emerald-600 hover:underline"
+                                            className="font-medium text-[var(--accent)] hover:underline"
                                         >
                                             View / Edit
                                         </Link>

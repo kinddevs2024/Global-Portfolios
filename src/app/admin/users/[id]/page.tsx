@@ -149,7 +149,6 @@ export default function AdminUserDetailPage() {
                             >
                                 <option value="student">student</option>
                                 <option value="university">university</option>
-                                <option value="investor">investor</option>
                                 <option value="admin">admin</option>
                             </select>
                             <button

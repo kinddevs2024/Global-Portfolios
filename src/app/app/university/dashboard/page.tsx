@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 type University = {
     _id: string;
@@ -31,6 +32,7 @@ function computeProfileProgress(university: University | undefined): number {
 }
 
 export default function UniversityDashboardPage() {
+    const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<DashboardData | null>(null);
 
@@ -47,7 +49,14 @@ export default function UniversityDashboardPage() {
                     return;
                 }
                 const payload = (await res.json()) as { data?: DashboardData };
-                setData(payload.data ?? null);
+                const d = payload.data ?? null;
+                setData(d);
+                const uni = d?.university;
+                const name = uni?.universityInfo?.name?.trim() ?? "";
+                if (!name || name === "My University") {
+                    router.replace("/app/university/profile");
+                    return;
+                }
             } catch {
                 setData(null);
             } finally {
@@ -55,7 +64,7 @@ export default function UniversityDashboardPage() {
             }
         }
         void load();
-    }, []);
+    }, [router]);
 
     if (loading) {
         return <div className="rounded-2xl border border-emerald-200 bg-white p-8">Загрузка...</div>;

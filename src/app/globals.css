@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./design-tokens.css";
 
 :root {
   --background: #f8fbf8;
@@ -10,6 +11,20 @@
   --surface: #ffffff;
   --surface-soft: #f3f7f3;
   --text-muted: #6b7280;
+  /* Aligned with olympiad tokens */
+  --bg-primary: #f8fbf8;
+  --bg-secondary: #f0f7f2;
+  --bg-tertiary: #e8f0ea;
+  --text-primary: #111827;
+  --text-secondary: #374151;
+  --text-tertiary: #6b7280;
+  --accent: #0f9f56;
+  --accent-dark: #057a43;
+  --accent-light: #22c55e;
+  --success: #0f9f56;
+  --error: #dc2626;
+  --warning: #d97706;
+  --shadow-soft: rgba(15, 159, 86, 0.15);
 }
 
 [data-theme="dark"] {
@@ -22,6 +37,19 @@
   --surface: #101918;
   --surface-soft: #0d1514;
   --text-muted: #9ca3af;
+  --bg-primary: #0b1110;
+  --bg-secondary: #101918;
+  --bg-tertiary: #15201e;
+  --text-primary: #e5e7eb;
+  --text-secondary: #9ca3af;
+  --text-tertiary: #6b7280;
+  --accent: #22c55e;
+  --accent-dark: #16a34a;
+  --accent-light: #4ade80;
+  --success: #22c55e;
+  --error: #ef4444;
+  --warning: #f59e0b;
+  --shadow-soft: rgba(0, 0, 0, 0.3);
 }
 
 @theme inline {
@@ -31,38 +59,45 @@
   --font-mono: var(--font-geist-mono);
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100%;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+h1, h2, h3, h4, h5, h6 {
   color: var(--foreground);
 }
 
-p,
-span,
-label,
-small {
+p, span, label, small {
   color: inherit;
 }
 
 .card {
   border: 1px solid var(--border);
   background: var(--surface);
-  border-radius: 1rem;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
 }
 
 .pill {
   background: var(--muted);
-  color: #057a43;
+  color: var(--accent-dark);
   border: 1px solid var(--border);
+  border-radius: var(--radius-full);
 }
 
 input,
@@ -70,7 +105,19 @@ select,
 textarea {
   background: var(--surface);
   color: var(--foreground);
-  border-color: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md) var(--spacing-base);
+  font-size: var(--font-size-sm);
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--shadow-soft);
 }
 
 input::placeholder,
@@ -82,6 +129,46 @@ input:read-only,
 select:disabled,
 textarea:read-only {
   background: var(--surface-soft);
+  opacity: 0.9;
+}
+
+/* Buttons – primary */
+.btn-primary {
+  background: var(--accent);
+  color: var(--primary-foreground);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: background var(--transition-base), transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.btn-primary:hover {
+  background: var(--accent-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Page container */
+.page-container {
+  max-width: var(--container-xl);
+  margin: 0 auto;
+  padding: 0 var(--spacing-base);
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: var(--spacing-2xl) var(--spacing-base);
+  color: var(--text-muted);
 }
 
 [data-theme="dark"] .text-gray-500,
@@ -94,4 +181,31 @@ textarea:read-only {
 [data-theme="dark"] .bg-white\/95,
 [data-theme="dark"] .bg-gray-50 {
   background: var(--surface) !important;
+}
+
+[data-theme="dark"] .border-emerald-100,
+[data-theme="dark"] .border-emerald-200 {
+  border-color: var(--border) !important;
+}
+
+[data-theme="dark"] .bg-emerald-50,
+[data-theme="dark"] .hover\:bg-emerald-50:hover {
+  background: var(--surface-soft) !important;
+}
+
+[data-theme="dark"] .text-emerald-600,
+[data-theme="dark"] .text-emerald-700 {
+  color: var(--accent) !important;
+}
+
+/* Auth pages – centered layout with soft gradient */
+.auth-page {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--accent) 12%, var(--background)) 0%,
+    var(--background) 50%,
+    color-mix(in srgb, var(--accent) 8%, var(--bg-secondary)) 100%
+  );
+  min-height: 100vh;
+  min-height: 100dvh;
 }

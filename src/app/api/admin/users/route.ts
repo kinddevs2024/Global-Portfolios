@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth/guards";
-import { connectToDatabase } from "@/lib/db/mongoose";
-import { UserModel } from "@/server/models/User";
+import { backendAuthedFetchRaw } from "@/lib/auth/backendProxy";
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
         await requireAuth(["admin"]);
     } catch {
@@ -11,24 +10,28 @@ export async function GET() {
     }
 
     try {
-        await connectToDatabase();
-        const users = await UserModel.find({})
-            .select("email role verificationStatus createdAt emailVerifiedAt")
-            .sort({ createdAt: -1 })
-            .lean();
-
-        const list = users.map((u) => ({
-            _id: String(u._id),
-            email: u.email,
-            role: u.role,
-            verificationStatus: u.verificationStatus,
-            createdAt: u.createdAt,
-            emailVerifiedAt: u.emailVerifiedAt,
+        const { response, payload } = await backendAuthedFetchRaw(
+            "/admin/users",
+            {},
+            request
+        );
+        if (!response.ok) {
+            const message =
+                payload && typeof payload === "object" && "message" in (payload as object)
+                    ? String((payload as { message?: string }).message)
+                    : "Failed to load users";
+            return NextResponse.json({ error: message }, { status: response.status });
+        }
+        const data = payload as { items?: Array<Record<string, unknown>>; pagination?: unknown };
+        const items = (data.items ?? []).map((u) => ({
+            ...u,
+            verificationStatus: u.isVerified ? "verified" : "pending",
         }));
-
-        return NextResponse.json({ items: list });
+        return NextResponse.json({ items, pagination: data.pagination });
     } catch (error) {
-        const message = error instanceof Error ? error.message : "Failed to list users";
-        return NextResponse.json({ error: message }, { status: 500 });
+        return NextResponse.json(
+            { error: error instanceof Error ? error.message : "Backend unavailable" },
+            { status: 502 }
+        );
     }
 }

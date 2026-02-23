@@ -59,26 +59,26 @@ function RegisterForm() {
 
     if (!role) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <p className="text-gray-600">Redirecting...</p>
+            <div className="auth-page flex min-h-screen items-center justify-center">
+                <p className="text-[var(--text-muted)]">Redirecting...</p>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen px-6 py-10 md:px-12">
-            <main className="mx-auto max-w-md card p-6">
-                <h1 className="text-2xl font-bold">Create {role} account</h1>
-                <p className="mt-1 text-sm text-gray-600">
+        <div className="auth-page flex min-h-screen items-center justify-center px-4 py-8 sm:px-6 sm:py-10">
+            <main className="card w-full max-w-md p-6 sm:p-8">
+                <h1 className="text-2xl font-bold text-[var(--foreground)]">Create {role} account</h1>
+                <p className="mt-1 text-sm text-[var(--text-muted)]">
                     Use email and password. You will receive a verification link.
                 </p>
 
                 <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
                     <input type="hidden" name="role" value={role} />
                     <div>
-                        <label className="mb-1 block text-sm font-medium">Email</label>
+                        <label className="mb-1 block text-sm font-medium text-[var(--foreground)]">Email</label>
                         <input
-                            className="w-full rounded-xl border border-emerald-200 px-3 py-2"
+                            className="w-full"
                             type="email"
                             value={email}
                             onChange={(event) => setEmail(event.target.value)}
@@ -86,9 +86,9 @@ function RegisterForm() {
                         />
                     </div>
                     <div>
-                        <label className="mb-1 block text-sm font-medium">Password</label>
+                        <label className="mb-1 block text-sm font-medium text-[var(--foreground)]">Password</label>
                         <input
-                            className="w-full rounded-xl border border-emerald-200 px-3 py-2"
+                            className="w-full"
                             type="password"
                             value={password}
                             onChange={(event) => setPassword(event.target.value)}
@@ -97,21 +97,21 @@ function RegisterForm() {
                         />
                     </div>
 
-                    {error ? <p className="text-sm text-red-600">{error}</p> : null}
+                    {error ? <p className="text-sm text-[var(--error)]">{error}</p> : null}
 
                     <button
-                        className="w-full rounded-xl bg-emerald-600 px-4 py-2 text-white disabled:opacity-70"
+                        className="btn-primary w-full disabled:opacity-70"
                         disabled={submitting}
                         type="submit"
                     >
                         {submitting ? "Registering..." : "Register"}
                     </button>
 
-                    <p className="text-center text-sm text-gray-600">
-                        Already have an account? <Link className="font-medium text-emerald-700" href="/auth/login">Login</Link>
+                    <p className="text-center text-sm text-[var(--text-muted)]">
+                        Already have an account? <Link className="font-medium text-[var(--accent)] hover:underline" href="/auth/login">Login</Link>
                     </p>
-                    <p className="text-center text-xs text-gray-500">
-                        <Link className="hover:text-gray-700" href="/auth/choose-role">← Choose different role</Link>
+                    <p className="text-center text-xs text-[var(--text-muted)]">
+                        <Link className="hover:text-[var(--foreground)]" href="/auth/choose-role">← Choose different role</Link>
                     </p>
                 </form>
             </main>
@@ -122,8 +122,8 @@ function RegisterForm() {
 export default function RegisterPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center">
-                <p className="text-gray-600">Loading...</p>
+            <div className="auth-page flex min-h-screen items-center justify-center">
+                <p className="text-[var(--text-muted)]">Loading...</p>
             </div>
         }>
             <RegisterForm />

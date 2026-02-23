@@ -1,7 +1,8 @@
 export const AUTH_TOKEN_COOKIE = "gp_token";
 export const AUTH_REFRESH_TOKEN_COOKIE = "gp_refresh_token";
 
-const defaultBackendApiBase = "http://127.0.0.1:4000/api";
+// Unified backend: one API for olympiads + portfolio. Portfolio uses /api/portfolio prefix.
+const defaultBackendApiBase = "http://127.0.0.1:3000/api/portfolio";
 
 export function getBackendApiBase() {
     return (process.env.BACKEND_API_URL ?? defaultBackendApiBase).replace(/\/$/, "");
@@ -10,6 +11,15 @@ export function getBackendApiBase() {
 export function getBackendApiUrl(path: string) {
     const normalizedPath = path.startsWith("/") ? path : `/${path}`;
     return `${getBackendApiBase()}${normalizedPath}`;
+}
+
+/** Origin of the backend (for Socket.IO client). Same host as API, no path. */
+export function getSocketOrigin(): string {
+    try {
+        return new URL(getBackendApiBase()).origin;
+    } catch {
+        return "http://127.0.0.1:3000";
+    }
 }
 
 export async function parseBackendErrorMessage(response: Response, fallback: string) {
@@ -49,21 +59,22 @@ export function shouldUseSecureAuthCookies(request: Request) {
 
 function normalizeApiBase(value: string) {
     const trimmed = value.trim().replace(/\/$/, "");
-    return trimmed.endsWith("/api") ? trimmed : `${trimmed}/api`;
+    if (trimmed.endsWith("/api") || trimmed.includes("/api/")) return trimmed;
+    return `${trimmed}/api`;
 }
 
 export function getBackendApiBaseCandidates(request?: Request) {
     const candidates = new Set<string>([
         normalizeApiBase(getBackendApiBase()),
-        "http://127.0.0.1:4000/api",
-        "http://localhost:4000/api",
+        "http://127.0.0.1:3000/api/portfolio",
+        "http://localhost:3000/api/portfolio",
     ]);
 
     if (request) {
         try {
             const hostname = new URL(request.url).hostname;
             if (hostname && hostname !== "127.0.0.1" && hostname !== "localhost") {
-                candidates.add(`http://${hostname}:4000/api`);
+                candidates.add(`http://${hostname}:3000/api/portfolio`);
             }
         } catch {
             // no-op

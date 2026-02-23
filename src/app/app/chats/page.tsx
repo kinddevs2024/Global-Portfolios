@@ -1,29 +1,40 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { usePortfolioSocketOptional } from "@/contexts/PortfolioSocketContext";
 
 type Conversation = { _id: string; participants: string[]; updatedAt: string };
 
 export default function StudentChatsPage() {
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [loading, setLoading] = useState(true);
+    const socketState = usePortfolioSocketOptional();
+
+    const loadConversations = useCallback(async () => {
+        try {
+            const res = await fetch("/api/chat/conversations");
+            if (res.ok) {
+                const data = (await res.json()) as { items?: Conversation[] };
+                setConversations(data.items ?? []);
+            }
+        } catch {
+            setConversations([]);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
-        async function load() {
-            try {
-                const res = await fetch("/api/chat/conversations");
-                if (res.ok) {
-                    const data = (await res.json()) as { items?: Conversation[] };
-                    setConversations(data.items ?? []);
-                }
-            } catch {
-                setConversations([]);
-            } finally {
-                setLoading(false);
-            }
-        }
-        void load();
-    }, []);
+        void loadConversations();
+    }, [loadConversations]);
+
+    useEffect(() => {
+        if (!socketState?.onMessage) return;
+        const unsubscribe = socketState.onMessage(() => {
+            void loadConversations();
+        });
+        return unsubscribe;
+    }, [socketState, loadConversations]);
 
     return (
         <div className="space-y-6">

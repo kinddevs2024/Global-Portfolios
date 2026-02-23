@@ -32,16 +32,16 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="min-h-screen overflow-x-hidden px-6 py-10 md:px-12">
-            <main className="mx-auto max-w-lg card p-6">
-                <h1 className="text-2xl font-bold">Sign in</h1>
-                <p className="mt-1 text-sm text-gray-600">Enter your account credentials.</p>
+        <div className="auth-page min-h-screen overflow-x-hidden flex items-center justify-center px-4 py-8 sm:px-6 sm:py-10">
+            <main className="card w-full max-w-md p-6 sm:p-8">
+                <h1 className="text-2xl font-bold text-[var(--foreground)]">Sign in</h1>
+                <p className="mt-1 text-sm text-[var(--text-muted)]">Enter your account credentials.</p>
 
                 <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
                     <div>
-                        <label className="mb-1 block text-sm font-medium">Email</label>
+                        <label className="mb-1 block text-sm font-medium text-[var(--foreground)]">Email</label>
                         <input
-                            className="w-full rounded-xl border border-emerald-200 px-3 py-2"
+                            className="w-full"
                             type="email"
                             value={email}
                             onChange={(event) => setEmail(event.target.value)}
@@ -49,9 +49,9 @@ export default function LoginPage() {
                         />
                     </div>
                     <div>
-                        <label className="mb-1 block text-sm font-medium">Password</label>
+                        <label className="mb-1 block text-sm font-medium text-[var(--foreground)]">Password</label>
                         <input
-                            className="w-full rounded-xl border border-emerald-200 px-3 py-2"
+                            className="w-full"
                             type="password"
                             value={password}
                             onChange={(event) => setPassword(event.target.value)}
@@ -60,20 +60,17 @@ export default function LoginPage() {
                         />
                     </div>
 
-                    {error ? <p className="text-sm text-red-600">{error}</p> : null}
+                    {error ? <p className="text-sm text-[var(--error)]">{error}</p> : null}
 
-                    <button
-                        className="w-full rounded-xl bg-emerald-600 px-4 py-2 text-white"
-                        type="submit"
-                    >
+                    <button className="btn-primary w-full" type="submit">
                         Login
                     </button>
 
-                    <p className="text-center text-sm text-gray-600">
-                        No account yet? <Link className="font-medium text-emerald-700" href="/auth/choose-role">Register</Link>
+                    <p className="text-center text-sm text-[var(--text-muted)]">
+                        No account yet? <Link className="font-medium text-[var(--accent)] hover:underline" href="/auth/choose-role">Register</Link>
                     </p>
-                    <p className="text-center text-xs text-gray-500">
-                        <Link className="hover:text-gray-700" href="/">← Back to homepage</Link>
+                    <p className="text-center text-xs text-[var(--text-muted)]">
+                        <Link className="hover:text-[var(--foreground)]" href="/">← Back to homepage</Link>
                     </p>
                 </form>
             </main>

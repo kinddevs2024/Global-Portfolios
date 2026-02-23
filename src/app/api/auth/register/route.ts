@@ -30,14 +30,14 @@ function getBackendRegisterUrlCandidates(request: Request) {
 
     const candidates = new Set<string>([
         configuredUrl,
-        "http://127.0.0.1:4000/api/auth/register",
-        "http://localhost:4000/api/auth/register",
+        "http://127.0.0.1:3000/api/portfolio/auth/register",
+        "http://localhost:3000/api/portfolio/auth/register",
     ]);
 
     try {
         const hostname = new URL(request.url).hostname;
         if (hostname && hostname !== "localhost" && hostname !== "127.0.0.1") {
-            candidates.add(`http://${hostname}:4000/api/auth/register`);
+            candidates.add(`http://${hostname}:3000/api/portfolio/auth/register`);
         }
     } catch {
         // ignore URL parse issues
