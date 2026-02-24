@@ -75,8 +75,8 @@ export default function UniversityDiscoveryPage() {
             });
 
             if (!inviteRes.ok) {
-                const payload = (await inviteRes.json()) as { message?: string };
-                setOutreachError(payload.message ?? "Не удалось отправить");
+                const payload = (await inviteRes.json()) as { message?: string; error?: string };
+                setOutreachError(payload.error ?? payload.message ?? "Не удалось отправить");
                 return;
             }
 

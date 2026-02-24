@@ -108,12 +108,12 @@ export default function UniversityDashboardPage() {
                     </Link>
                     <div className="mt-4 flex justify-end">
                         <div className="relative h-20 w-20">
-                            <svg className="h-20 w-20 -rotate-90" viewBox="0 0 36 36">
-                                <circle cx="18" cy="18" r="16" fill="none" stroke="#d1fae5" strokeWidth="3" />
+                            <svg className="h-20 w-20 -rotate-90" viewBox="0 0 36 36" style={{ overflow: "visible" }}>
+                                <circle cx="18" cy="18" r="15.5" fill="none" stroke="#d1fae5" strokeWidth="3" strokeLinecap="round" />
                                 <circle
                                     cx="18"
                                     cy="18"
-                                    r="16"
+                                    r="15.5"
                                     fill="none"
                                     stroke="#059669"
                                     strokeWidth="3"

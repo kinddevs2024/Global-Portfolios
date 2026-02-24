@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { AutoTranslator } from "@/components/auto-translator";
+import { EmailVerifyBanner } from "@/components/email-verify-banner";
 import { ThemeController } from "@/components/theme-controller";
 
 const geistSans = Geist({
@@ -36,6 +38,8 @@ export default function RootLayout({
       >
         <ThemeController />
         <AutoTranslator />
+        <AnalyticsTracker />
+        <EmailVerifyBanner />
         {children}
       </body>
     </html>

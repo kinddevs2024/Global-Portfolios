@@ -251,11 +251,10 @@ export default function AppHomePage() {
     const incomingInvites = applications.filter((item) => item.initiatedBy === "university" && item.status === "pending").length;
     const unreadNotifications = notifications.filter((item) => !item.isRead).length;
     const rating = profile?.globalScore ?? 0;
-    const skills = (profile?.skills ?? []).map((item) => item.name).filter(Boolean).slice(0, 6) as string[];
     const recommendation = profile?.aiAnalysis?.recommendation ?? "Заполните портфолио полностью, чтобы получить персональные рекомендации.";
-    const stepCompletions = getStepCompletionsFromMissing(profileMissing);
-    const skillsStep = stepCompletions.find((s) => s.step === 3);
-    const skillsPct = skillsStep?.completion ?? 0;
+    const stepCompletions = getStepCompletionsFromMissing(profileMissing).filter(
+        (s) => s.step !== 3 && s.step !== 5
+    );
 
     return (
         <div className="space-y-6">
@@ -263,48 +262,6 @@ export default function AppHomePage() {
                 <h1 className="text-2xl font-bold">Dashboard</h1>
                 <p className="mt-1 text-sm text-gray-600">{user.email}</p>
                 <p className="mt-3 text-sm text-gray-700">Заявки, университеты, рейтинг и рекомендации.</p>
-            </section>
-
-            <section className="grid gap-4 sm:grid-cols-2">
-                <div className="card overflow-hidden p-5">
-                    <div className="flex items-start justify-between gap-2">
-                        <h2 className="text-lg font-semibold text-gray-800">Skills</h2>
-                        <Link
-                            href="/app/portfolio?step=3"
-                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white transition hover:bg-emerald-700"
-                            aria-label="Открыть раздел Skills"
-                        >
-                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                        </Link>
-                    </div>
-                    <div className="mt-4 flex justify-center">
-                        <div className="relative flex h-24 w-24 items-center justify-center">
-                            <svg className="absolute h-24 w-24 -rotate-90" viewBox="0 0 36 36">
-                                <circle cx="18" cy="18" r="16" fill="none" stroke="#e5e7eb" strokeWidth="3" />
-                                <circle
-                                    cx="18"
-                                    cy="18"
-                                    r="16"
-                                    fill="none"
-                                    stroke="#10b981"
-                                    strokeWidth="3"
-                                    strokeDasharray={`${skillsPct} 100`}
-                                    strokeLinecap="round"
-                                    className="transition-all duration-500"
-                                />
-                            </svg>
-                            <span className="relative text-base font-bold text-gray-800">{skillsPct}%</span>
-                        </div>
-                    </div>
-                    <Link
-                        href="/app/portfolio?step=3"
-                        className="mt-4 block w-full rounded-lg border border-emerald-200 bg-white py-2.5 text-center text-sm font-medium text-gray-800 transition hover:bg-emerald-50"
-                    >
-                        {skillsPct === 100 ? "Просмотреть" : "Заполнить"}
-                    </Link>
-                </div>
             </section>
 
             {profileCompletion < 100 ? (
@@ -334,12 +291,12 @@ export default function AppHomePage() {
                                             stepPct === 100 ? "bg-emerald-500" : "border-2 border-gray-200 bg-gray-50"
                                         }`}
                                     >
-                                        <svg className="absolute inset-0 h-20 w-20 -rotate-90" viewBox="0 0 36 36">
-                                            <circle cx="18" cy="18" r="16" fill="none" stroke={stepPct === 100 ? "rgba(255,255,255,0.4)" : "#e5e7eb"} strokeWidth="3" />
+                                        <svg className="absolute inset-0 h-20 w-20 -rotate-90" viewBox="0 0 36 36" style={{ overflow: "visible" }}>
+                                            <circle cx="18" cy="18" r="15.5" fill="none" stroke={stepPct === 100 ? "rgba(255,255,255,0.4)" : "#e5e7eb"} strokeWidth="3" strokeLinecap="round" />
                                             <circle
                                                 cx="18"
                                                 cy="18"
-                                                r="16"
+                                                r="15.5"
                                                 fill="none"
                                                 stroke={stepPct === 100 ? "#fff" : "#10b981"}
                                                 strokeWidth="3"
@@ -399,19 +356,8 @@ export default function AppHomePage() {
             </section>
 
             <section className="card p-5">
-                <h2 className="text-lg font-semibold">Ваши скиллы</h2>
-                {skills.length > 0 ? (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                        {skills.map((skill) => (
-                            <span key={skill} className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs">
-                                {skill}
-                            </span>
-                        ))}
-                    </div>
-                ) : (
-                    <p className="mt-2 text-sm text-gray-600">Пока нет навыков. Добавьте их на странице портфолио.</p>
-                )}
-                <p className="mt-4 text-sm text-gray-700"><strong>Рекомендация:</strong> {recommendation}</p>
+                <h2 className="text-lg font-semibold">Рекомендация</h2>
+                <p className="mt-2 text-sm text-gray-700">{recommendation}</p>
                 <Link className="mt-4 inline-flex rounded-lg border border-emerald-300 px-4 py-2 text-sm" href="/app/portfolio">
                     Редактировать портфолио
                 </Link>

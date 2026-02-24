@@ -108,12 +108,11 @@ const defaultState: PortfolioState = {
 const steps = [
     "Basic Info",
     "Education",
-    "Skills",
     "Certifications",
-    "Experience",
     "Achievements",
     "Optional",
 ] as const;
+
 
 function calculateAge(dateOfBirth: string) {
     if (!dateOfBirth) return 18;
@@ -166,16 +165,8 @@ function getMissingFields(form: PortfolioState): MissingField[] {
     if (!hasText(form.languages[0]?.name)) missing.push({ label: "Language", step: 2 });
     if (!hasText(form.languages[0]?.level)) missing.push({ label: "Language Proficiency", step: 2 });
 
-    if (!hasText(form.hardSkills[0]?.name)) missing.push({ label: "Hard Skill", step: 3 });
-    if (!hasText(form.softSkills[0]?.name)) missing.push({ label: "Soft Skill", step: 3 });
-
     if (!hasText(form.certifications[0]?.name)) missing.push({ label: "Certification Name", step: 4 });
     if (!hasText(form.certifications[0]?.organization)) missing.push({ label: "Certification Organization", step: 4 });
-
-    if (!hasText(form.internships[0]?.companyName)) missing.push({ label: "Internship: Company Name", step: 5 });
-    if (!hasText(form.internships[0]?.position)) missing.push({ label: "Internship: Position", step: 5 });
-    if (!hasText(form.projects[0]?.title)) missing.push({ label: "Project Title", step: 5 });
-    if (!hasText(form.projects[0]?.description)) missing.push({ label: "Project Description", step: 5 });
 
     if (!hasText(form.awards[0]?.title)) missing.push({ label: "Award Title", step: 6 });
     if (!hasText(form.awards[0]?.organization)) missing.push({ label: "Award Organization", step: 6 });
@@ -190,9 +181,7 @@ function getMissingFields(form: PortfolioState): MissingField[] {
 const STEP_LABELS: Record<number, string> = {
     1: "Basic Info",
     2: "Education",
-    3: "Skills",
     4: "Certifications",
-    5: "Experience",
     6: "Achievements",
     7: "Optional",
 };
@@ -200,16 +189,16 @@ const STEP_LABELS: Record<number, string> = {
 const STEP_REQUIRED_COUNTS: Record<number, number> = {
     1: 10,
     2: 5,
-    3: 2,
     4: 2,
-    5: 4,
     6: 2,
     7: 3,
 };
 
+const FORM_STEPS = [1, 2, 4, 6, 7] as const;
+
 function getStepCompletions(form: PortfolioState, missingFields: MissingField[]) {
-    return steps.map((label, index) => {
-        const stepNum = index + 1;
+    return FORM_STEPS.map((stepNum) => {
+        const label = STEP_LABELS[stepNum] ?? "";
         const required = STEP_REQUIRED_COUNTS[stepNum] ?? 1;
         const missing = missingFields.filter((m) => m.step === stepNum).length;
         const filled = required - missing;
@@ -258,8 +247,10 @@ export default function PortfolioPage() {
 
     useEffect(() => {
         const requestedStep = Number(searchParams.get("step"));
-        if (Number.isInteger(requestedStep) && requestedStep >= 1 && requestedStep <= steps.length) {
-            setStep(requestedStep);
+        if (Number.isInteger(requestedStep) && requestedStep >= 1 && requestedStep <= 7) {
+            if (requestedStep === 3) setStep(4);
+            else if (requestedStep === 5) setStep(6);
+            else setStep(requestedStep);
         }
     }, [searchParams]);
 
@@ -384,7 +375,12 @@ export default function PortfolioPage() {
         setShowMissing(false);
         const ok = await saveToPlatform();
         if (ok) {
-            setStep((current) => Math.min(7, current + 1));
+            setStep((current) => {
+                const next = current + 1;
+                if (next === 3) return 4;
+                if (next === 5) return 6;
+                return Math.min(7, next);
+            });
         }
     }
 
@@ -438,12 +434,12 @@ export default function PortfolioPage() {
                                         stepPct === 100 ? "bg-emerald-500" : "border-2 border-gray-200 bg-gray-50"
                                     }`}
                                 >
-                                    <svg className="absolute inset-0 h-20 w-20 -rotate-90" viewBox="0 0 36 36">
-                                        <circle cx="18" cy="18" r="16" fill="none" stroke={stepPct === 100 ? "rgba(255,255,255,0.4)" : "#e5e7eb"} strokeWidth="3" />
+                                    <svg className="absolute inset-0 h-20 w-20 -rotate-90" viewBox="0 0 36 36" style={{ overflow: "visible" }}>
+                                        <circle cx="18" cy="18" r="15.5" fill="none" stroke={stepPct === 100 ? "rgba(255,255,255,0.4)" : "#e5e7eb"} strokeWidth="3" strokeLinecap="round" />
                                         <circle
                                             cx="18"
                                             cy="18"
-                                            r="16"
+                                            r="15.5"
                                             fill="none"
                                             stroke={stepPct === 100 ? "#fff" : "#10b981"}
                                             strokeWidth="3"
@@ -559,33 +555,6 @@ export default function PortfolioPage() {
                     </>
                 ) : null}
 
-                {step === 3 ? (
-                    <>
-                        <h2 className="text-lg font-semibold">3) Навыки</h2>
-                        <h3 className="text-sm font-medium">Hard Skills</h3>
-                        <div className="space-y-2">
-                            {form.hardSkills.map((item, index) => (
-                                <div className="grid gap-2 md:grid-cols-2" key={`hard-${index}`}>
-                                    <input className="rounded-lg border border-emerald-200 px-3 py-2" placeholder="Skill name" value={item.name} onChange={(e) => persistDraft({ ...form, hardSkills: updateArrayItem(form.hardSkills, index, { name: e.target.value }) })} />
-                                    <input className="rounded-lg border border-emerald-200 px-3 py-2" placeholder="Self rating 1-5" value={item.level} onChange={(e) => persistDraft({ ...form, hardSkills: updateArrayItem(form.hardSkills, index, { level: e.target.value }) })} />
-                                </div>
-                            ))}
-                            <button className="rounded-lg border border-emerald-300 px-3 py-2 text-sm" onClick={() => persistDraft({ ...form, hardSkills: [...form.hardSkills, { name: "", level: "3" }] })} type="button">+ Add More Hard Skill</button>
-                        </div>
-
-                        <h3 className="text-sm font-medium">Soft Skills</h3>
-                        <div className="space-y-2">
-                            {form.softSkills.map((item, index) => (
-                                <div className="grid gap-2 md:grid-cols-2" key={`soft-${index}`}>
-                                    <input className="rounded-lg border border-emerald-200 px-3 py-2" placeholder="Skill name" value={item.name} onChange={(e) => persistDraft({ ...form, softSkills: updateArrayItem(form.softSkills, index, { name: e.target.value }) })} />
-                                    <input className="rounded-lg border border-emerald-200 px-3 py-2" placeholder="Self rating 1-5" value={item.level} onChange={(e) => persistDraft({ ...form, softSkills: updateArrayItem(form.softSkills, index, { level: e.target.value }) })} />
-                                </div>
-                            ))}
-                            <button className="rounded-lg border border-emerald-300 px-3 py-2 text-sm" onClick={() => persistDraft({ ...form, softSkills: [...form.softSkills, { name: "", level: "3" }] })} type="button">+ Add More Soft Skill</button>
-                        </div>
-                    </>
-                ) : null}
-
                 {step === 4 ? (
                     <>
                         <h2 className="text-lg font-semibold">4) Сертификаты</h2>
@@ -627,41 +596,6 @@ export default function PortfolioPage() {
                                 </div>
                             ))}
                             <button className="rounded-lg border border-emerald-300 px-3 py-2 text-sm" onClick={() => persistDraft({ ...form, certifications: [...form.certifications, { name: "", organization: "", issueDate: "", expirationDate: "", score: "", verificationLink: "", imageUrl: "" }] })} type="button">+ Add More Certification</button>
-                        </div>
-                    </>
-                ) : null}
-
-                {step === 5 ? (
-                    <>
-                        <h2 className="text-lg font-semibold">5) Профессиональный блок</h2>
-                        <h3 className="text-sm font-medium">Internships</h3>
-                        <div className="space-y-3">
-                            {form.internships.map((item, index) => (
-                                <div className="grid gap-2 rounded-xl border border-emerald-100 p-3 md:grid-cols-2" key={`intern-${index}`}>
-                                    <input className="rounded-lg border border-emerald-200 px-3 py-2" placeholder="Company Name" value={item.companyName} onChange={(e) => persistDraft({ ...form, internships: updateArrayItem(form.internships, index, { companyName: e.target.value }) })} />
-                                    <input className="rounded-lg border border-emerald-200 px-3 py-2" placeholder="Position" value={item.position} onChange={(e) => persistDraft({ ...form, internships: updateArrayItem(form.internships, index, { position: e.target.value }) })} />
-                                    <input className="rounded-lg border border-emerald-200 px-3 py-2" placeholder="Country" value={item.country} onChange={(e) => persistDraft({ ...form, internships: updateArrayItem(form.internships, index, { country: e.target.value }) })} />
-                                    <input className="rounded-lg border border-emerald-200 px-3 py-2" placeholder="Skills Gained" value={item.skillsGained} onChange={(e) => persistDraft({ ...form, internships: updateArrayItem(form.internships, index, { skillsGained: e.target.value }) })} />
-                                    <textarea className="rounded-lg border border-emerald-200 px-3 py-2 md:col-span-2" placeholder="Description" value={item.description} onChange={(e) => persistDraft({ ...form, internships: updateArrayItem(form.internships, index, { description: e.target.value }) })} />
-                                </div>
-                            ))}
-                            <button className="rounded-lg border border-emerald-300 px-3 py-2 text-sm" onClick={() => persistDraft({ ...form, internships: [...form.internships, { companyName: "", position: "", country: "", startDate: "", endDate: "", description: "", skillsGained: "" }] })} type="button">+ Add More Internship</button>
-                        </div>
-
-                        <h3 className="text-sm font-medium">Projects</h3>
-                        <div className="space-y-3">
-                            {form.projects.map((item, index) => (
-                                <div className="grid gap-2 rounded-xl border border-emerald-100 p-3 md:grid-cols-2" key={`proj-${index}`}>
-                                    <input className="rounded-lg border border-emerald-200 px-3 py-2" placeholder="Project Title" value={item.title} onChange={(e) => persistDraft({ ...form, projects: updateArrayItem(form.projects, index, { title: e.target.value }) })} />
-                                    <input className="rounded-lg border border-emerald-200 px-3 py-2" placeholder="Role" value={item.role} onChange={(e) => persistDraft({ ...form, projects: updateArrayItem(form.projects, index, { role: e.target.value }) })} />
-                                    <input className="rounded-lg border border-emerald-200 px-3 py-2" placeholder="Technologies Used" value={item.technologies} onChange={(e) => persistDraft({ ...form, projects: updateArrayItem(form.projects, index, { technologies: e.target.value }) })} />
-                                    <input className="rounded-lg border border-emerald-200 px-3 py-2" placeholder="Project Link" value={item.link} onChange={(e) => persistDraft({ ...form, projects: updateArrayItem(form.projects, index, { link: e.target.value }) })} />
-                                    <input className="rounded-lg border border-emerald-200 px-3 py-2" placeholder="Duration" value={item.duration} onChange={(e) => persistDraft({ ...form, projects: updateArrayItem(form.projects, index, { duration: e.target.value }) })} />
-                                    <input className="rounded-lg border border-emerald-200 px-3 py-2" placeholder="Outcome" value={item.outcome} onChange={(e) => persistDraft({ ...form, projects: updateArrayItem(form.projects, index, { outcome: e.target.value }) })} />
-                                    <textarea className="rounded-lg border border-emerald-200 px-3 py-2 md:col-span-2" placeholder="Description" value={item.description} onChange={(e) => persistDraft({ ...form, projects: updateArrayItem(form.projects, index, { description: e.target.value }) })} />
-                                </div>
-                            ))}
-                            <button className="rounded-lg border border-emerald-300 px-3 py-2 text-sm" onClick={() => persistDraft({ ...form, projects: [...form.projects, { title: "", description: "", role: "", technologies: "", link: "", duration: "", outcome: "" }] })} type="button">+ Add More Project</button>
                         </div>
                     </>
                 ) : null}
@@ -722,7 +656,16 @@ export default function PortfolioPage() {
                 ) : null}
 
                 <div className="flex flex-wrap gap-3 pt-2">
-                    <button className="rounded-lg border border-gray-300 px-4 py-2" onClick={() => setStep((current) => Math.max(1, current - 1))} type="button">Back</button>
+                    <button
+                                        className="rounded-lg border border-gray-300 px-4 py-2"
+                                        onClick={() => setStep((current) => {
+                                            const prev = current - 1;
+                                            if (prev === 3) return 2;
+                                            if (prev === 5) return 4;
+                                            return Math.max(1, prev);
+                                        })}
+                                        type="button"
+                                    >Back</button>
                     {step < 7 ? (
                         <button className="rounded-lg border border-gray-300 px-4 py-2 disabled:opacity-70" disabled={saving} onClick={saveAndGoNext} type="button">{saving ? "Saving..." : "Далее"}</button>
                     ) : (

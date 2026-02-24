@@ -6,16 +6,23 @@ import LogoutButton from "./logout-button";
 import LanguageMenu from "@/components/language-menu";
 import AppLayoutClient from "./app-layout-client";
 import { PortfolioSocketProvider } from "@/contexts/PortfolioSocketContext";
+import { RoleGuard } from "./role-guard";
 
 export default async function PlatformLayout({ children }: { children: React.ReactNode }) {
+    let auth: { userId: string; role: string; email: string };
     try {
-        await requireAuth();
+        auth = await requireAuth();
     } catch {
         redirect("/auth/login");
     }
 
+    if (auth.role === "admin") {
+        redirect("/admin");
+    }
+
     return (
         <PortfolioSocketProvider>
+            <RoleGuard role={auth.role}>
             <div className="min-h-screen bg-background">
                 <header
                     className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-sm)] backdrop-blur-md"
@@ -41,6 +48,7 @@ export default async function PlatformLayout({ children }: { children: React.Rea
 
                 <AppLayoutClient>{children}</AppLayoutClient>
             </div>
+            </RoleGuard>
         </PortfolioSocketProvider>
     );
 }

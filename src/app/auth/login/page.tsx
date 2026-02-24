@@ -19,13 +19,20 @@ export default function LoginPage() {
                 body: JSON.stringify({ email, password }),
             });
 
+            const result = (await response.json()) as { error?: string; user?: { role?: string } };
             if (!response.ok) {
-                const result = (await response.json()) as { error?: string };
                 setError(result.error ?? "Login failed");
                 return;
             }
 
-            window.location.assign("/app");
+            const role = result.user?.role;
+            if (role === "admin") {
+                window.location.assign("/admin");
+            } else if (role === "university") {
+                window.location.assign("/app/university/dashboard");
+            } else {
+                window.location.assign("/app");
+            }
         } catch {
             setError("Network error. Please try again.");
         }

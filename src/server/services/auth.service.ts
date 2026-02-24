@@ -48,10 +48,6 @@ export async function loginUser(email: string, password: string) {
         throw new Error("Invalid credentials");
     }
 
-    if (user.emailVerificationToken && !user.emailVerifiedAt) {
-        throw new Error("Please verify your email first. Check your inbox for the verification link.");
-    }
-
     const token = signToken({
         userId: user._id.toString(),
         role: user.role,
@@ -63,5 +59,24 @@ export async function loginUser(email: string, password: string) {
 
 export async function getUserById(userId: string) {
     await connectToDatabase();
-    return UserModel.findById(userId).select("_id email role verificationStatus createdAt").lean();
+    return UserModel.findById(userId).select("_id email role verificationStatus createdAt emailVerifiedAt").lean();
+}
+
+export async function resendVerificationEmail(userId: string): Promise<{
+    alreadyVerified: boolean;
+    sent: boolean;
+    verificationToken?: string;
+    email?: string;
+}> {
+    await connectToDatabase();
+    const user = await UserModel.findById(userId);
+    if (!user) {
+        throw new Error("User not found");
+    }
+    if (user.emailVerifiedAt) {
+        return { alreadyVerified: true, sent: false };
+    }
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    await UserModel.findByIdAndUpdate(userId, { emailVerificationToken: verificationToken });
+    return { alreadyVerified: false, sent: true, verificationToken, email: user.email };
 }

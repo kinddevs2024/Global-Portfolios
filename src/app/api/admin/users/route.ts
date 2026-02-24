@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth/guards";
-import { backendAuthedFetchRaw } from "@/lib/auth/backendProxy";
+import { connectToDatabase } from "@/lib/db/mongoose";
+import { UserModel } from "@/server/models/User";
 
-export async function GET(request: Request) {
+export async function GET() {
     try {
         await requireAuth(["admin"]);
     } catch {
@@ -10,28 +11,24 @@ export async function GET(request: Request) {
     }
 
     try {
-        const { response, payload } = await backendAuthedFetchRaw(
-            "/admin/users",
-            {},
-            request
-        );
-        if (!response.ok) {
-            const message =
-                payload && typeof payload === "object" && "message" in (payload as object)
-                    ? String((payload as { message?: string }).message)
-                    : "Failed to load users";
-            return NextResponse.json({ error: message }, { status: response.status });
-        }
-        const data = payload as { items?: Array<Record<string, unknown>>; pagination?: unknown };
-        const items = (data.items ?? []).map((u) => ({
-            ...u,
-            verificationStatus: u.isVerified ? "verified" : "pending",
+        await connectToDatabase();
+        const users = await UserModel.find({})
+            .select("email role verificationStatus createdAt emailVerifiedAt")
+            .sort({ createdAt: -1 })
+            .lean();
+
+        const list = users.map((u) => ({
+            _id: String(u._id),
+            email: u.email,
+            role: u.role,
+            verificationStatus: u.verificationStatus,
+            createdAt: u.createdAt,
+            emailVerifiedAt: u.emailVerifiedAt,
         }));
-        return NextResponse.json({ items, pagination: data.pagination });
+
+        return NextResponse.json({ items: list });
     } catch (error) {
-        return NextResponse.json(
-            { error: error instanceof Error ? error.message : "Backend unavailable" },
-            { status: 502 }
-        );
+        const message = error instanceof Error ? error.message : "Failed to list users";
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }

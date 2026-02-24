@@ -2,14 +2,16 @@ import Link from "next/link";
 import Image from "next/image";
 import { requireAuth } from "@/lib/auth/guards";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
-  let isAuthenticated = false;
+  let showCabinet = false;
 
   try {
-    await requireAuth();
-    isAuthenticated = true;
+    const auth = await requireAuth();
+    showCabinet = auth.role !== "admin";
   } catch {
-    isAuthenticated = false;
+    showCabinet = false;
   }
 
   return (
@@ -28,7 +30,7 @@ export default async function Home() {
             <nav className="flex flex-wrap items-center gap-3 text-sm">
               <a className="rounded-lg px-3 py-2 hover:bg-emerald-50" href="#about">About</a>
               <a className="rounded-lg px-3 py-2 hover:bg-emerald-50" href="#contact">Contact</a>
-              {isAuthenticated ? (
+              {showCabinet ? (
                 <Link className="rounded-xl bg-emerald-600 px-4 py-2 text-white" href="/app">Кабинет</Link>
               ) : (
                 <>
@@ -50,7 +52,7 @@ export default async function Home() {
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            {isAuthenticated ? (
+            {showCabinet ? (
               <Link className="rounded-xl bg-emerald-600 px-5 py-3 text-white" href="/app">Перейти в кабинет</Link>
             ) : (
               <>

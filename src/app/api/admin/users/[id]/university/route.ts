@@ -1,34 +1,25 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth/guards";
-import { backendAuthedFetchRaw } from "@/lib/auth/backendProxy";
+import { connectToDatabase } from "@/lib/db/mongoose";
+import { UniversityModel } from "@/server/models/University";
 
 type Params = { params: Promise<{ id: string }> };
 
-export async function GET(request: Request, { params }: Params) {
+export async function GET(_request: Request, { params }: Params) {
     try {
         await requireAuth(["admin"]);
     } catch {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-    const { id } = await params;
+
+    const { id: userId } = await params;
     try {
-        const { response, payload } = await backendAuthedFetchRaw(
-            `/admin/users/${id}/university`,
-            {},
-            request
-        );
-        if (!response.ok) {
-            return NextResponse.json(
-                { error: "University profile not found" },
-                { status: response.status }
-            );
-        }
-        const profile = payload ?? null;
-        return NextResponse.json({ data: profile });
+        await connectToDatabase();
+        const university = await UniversityModel.findOne({ userId }).lean() as { _id: unknown; [key: string]: unknown } | null;
+        if (!university) return NextResponse.json({ error: "University profile not found" }, { status: 404 });
+        return NextResponse.json({ data: { ...university, _id: String(university._id) } });
     } catch (error) {
-        return NextResponse.json(
-            { error: error instanceof Error ? error.message : "Backend unavailable" },
-            { status: 502 }
-        );
+        const message = error instanceof Error ? error.message : "Failed to fetch university";
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }

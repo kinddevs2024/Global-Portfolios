@@ -1,33 +1,91 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 
-type Weights = Record<string, number>;
+const WEIGHT_KEYS = ["academic", "olympiad", "projects", "skills", "activity", "aiPotential"] as const;
+type WeightKey = (typeof WEIGHT_KEYS)[number];
+const WEIGHT_LABELS: Record<WeightKey, string> = {
+    academic: "Academic (GPA, exams)",
+    olympiad: "Olympiads",
+    projects: "Projects",
+    skills: "Skills",
+    activity: "Activity",
+    aiPotential: "AI potential",
+};
+
+type Weights = Record<WeightKey, number>;
+
+const defaultWeights: Weights = {
+    academic: 1,
+    olympiad: 1,
+    projects: 1,
+    skills: 1,
+    activity: 1,
+    aiPotential: 1,
+};
 
 export default function AdminScoringWeightsPage() {
-    const [weights, setWeights] = useState<Weights | null>(null);
+    const [weights, setWeights] = useState<Weights>(defaultWeights);
     const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
+    const [saveMessage, setSaveMessage] = useState("");
+
+    const load = useCallback(async () => {
+        try {
+            setError("");
+            const res = await fetch("/api/admin/scoring-weights", { credentials: "include" });
+            if (!res.ok) {
+                const data = (await res.json()) as { error?: string };
+                setError(data.error ?? "Failed to load weights");
+                return;
+            }
+            const data = (await res.json()) as { weights?: Partial<Weights> };
+            if (data.weights && typeof data.weights === "object") {
+                setWeights({ ...defaultWeights, ...data.weights } as Weights);
+            }
+        } catch {
+            setError("Network error");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
-        async function load() {
-            try {
-                const res = await fetch("/api/admin/scoring-weights", { credentials: "include" });
-                if (!res.ok) {
-                    setError("Failed to load weights");
-                    return;
-                }
-                const data = (await res.json()) as { weights?: Weights };
-                setWeights(data.weights ?? null);
-            } catch {
-                setError("Network error");
-            } finally {
-                setLoading(false);
-            }
-        }
         void load();
-    }, []);
+    }, [load]);
+
+    async function handleSave(e: React.FormEvent) {
+        e.preventDefault();
+        setSaving(true);
+        setError("");
+        setSaveMessage("");
+        try {
+            const res = await fetch("/api/admin/scoring-weights", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify(weights),
+            });
+            const data = (await res.json()) as { error?: string };
+            if (!res.ok) {
+                setError(data.error ?? "Failed to save");
+                return;
+            }
+            setSaveMessage("Weights saved.");
+        } catch {
+            setError("Network error");
+        } finally {
+            setSaving(false);
+        }
+    }
+
+    function setWeight(key: WeightKey, value: number) {
+        setWeights((w) => ({ ...w, [key]: Math.max(0, value) }));
+    }
+
+    const total = WEIGHT_KEYS.reduce((s, k) => s + weights[k], 0);
 
     return (
         <div className="min-h-screen px-6 py-10 md:px-12">
@@ -37,36 +95,48 @@ export default function AdminScoringWeightsPage() {
                 </Link>
                 <h1 className="text-3xl font-bold tracking-tight">Scoring Weights</h1>
                 <p className="text-sm text-gray-600">
-                    Weights used for student rating. Backend may read from env (RATING_WEIGHTS_JSON); runtime updates might not persist.
+                    Weights used for student rating. Values are relative; they are normalized when calculating the score.
                 </p>
 
                 {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+                {saveMessage && <p className="rounded-lg bg-green-50 p-3 text-sm text-green-700">{saveMessage}</p>}
 
                 {loading ? (
                     <p className="text-gray-500">Loading…</p>
-                ) : weights && Object.keys(weights).length > 0 ? (
-                    <div className="card overflow-hidden">
+                ) : (
+                    <form onSubmit={handleSave} className="card space-y-4">
                         <table className="w-full text-left text-sm">
                             <thead>
-                                <tr className="border-b bg-gray-50">
+                                <tr className="border-b border-gray-200">
                                     <th className="p-3 font-medium">Factor</th>
                                     <th className="p-3 font-medium text-right">Weight</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {Object.entries(weights).map(([key, value]) => (
-                                    <tr key={key} className="border-b last:border-0">
-                                        <td className="p-3">{key}</td>
+                                {WEIGHT_KEYS.map((key) => (
+                                    <tr key={key} className="border-b border-gray-100 last:border-0">
+                                        <td className="p-3">{WEIGHT_LABELS[key]}</td>
                                         <td className="p-3 text-right">
-                                            {typeof value === "number" ? (value * 100).toFixed(1) : value}%
+                                            <input
+                                                type="number"
+                                                min={0}
+                                                step={0.1}
+                                                value={weights[key]}
+                                                onChange={(e) => setWeight(key, Number(e.target.value) || 0)}
+                                                className="w-20 rounded border border-gray-300 px-2 py-1 text-right"
+                                            />
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
-                    </div>
-                ) : (
-                    <p className="text-gray-500">No weights configured.</p>
+                        <p className="text-xs text-gray-500">
+                            Sum: {total.toFixed(1)} (used as relative weights, no need to equal 1)
+                        </p>
+                        <button type="submit" disabled={saving} className="btn-primary">
+                            {saving ? "Saving…" : "Save weights"}
+                        </button>
+                    </form>
                 )}
             </main>
         </div>

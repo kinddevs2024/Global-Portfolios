@@ -3,6 +3,16 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { fileToDataUrl } from "@/lib/imageUtils";
+import {
+    IconBuilding,
+    IconWorld,
+    IconMessage,
+    IconDeviceFloppy,
+    IconPhoto,
+    IconCalendar,
+    IconUsers,
+    IconArrowLeft,
+} from "@tabler/icons-react";
 
 type UniversityInfo = {
     name?: string;
@@ -15,16 +25,7 @@ type UniversityInfo = {
     outreachMessage?: string;
 };
 
-const TABS = [
-    { id: "overview", label: "University Overview", icon: "◉" },
-    { id: "media", label: "Media and Location", icon: "◇" },
-    { id: "programs", label: "Programs and Academics", icon: "◆" },
-    { id: "campus", label: "Campus Life and Services", icon: "◎" },
-    { id: "contact", label: "Contact and Review", icon: "●" },
-];
-
 export default function UniversityProfilePage() {
-    const [tab, setTab] = useState("overview");
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [status, setStatus] = useState("");
@@ -90,68 +91,132 @@ export default function UniversityProfilePage() {
         }
     }
 
-    if (loading) return <div className="rounded-2xl border border-emerald-200 bg-white p-8">Загрузка...</div>;
+    if (loading) {
+        return (
+            <div className="flex min-h-[320px] items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-8">
+                <p className="text-[var(--text-muted)]">Загрузка…</p>
+            </div>
+        );
+    }
 
     return (
-        <div className="mx-auto max-w-4xl space-y-6">
-            <h1 className="text-2xl font-bold">Профиль университета</h1>
-
-            <div className="flex gap-2 overflow-x-auto border-b border-emerald-200 pb-2">
-                {TABS.map((t) => (
-                    <button
-                        key={t.id}
-                        onClick={() => setTab(t.id)}
-                        className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition ${
-                            tab === t.id ? "bg-emerald-600 text-white" : "bg-emerald-50 text-emerald-900 hover:bg-emerald-100"
-                        }`}
-                    >
-                        <span>{t.icon}</span>
-                        {t.label}
-                    </button>
-                ))}
+        <div className="mx-auto max-w-3xl space-y-8">
+            <div className="flex flex-wrap items-center gap-3">
+                <Link
+                    href="/app/university/dashboard"
+                    className="inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--foreground)]"
+                >
+                    <IconArrowLeft size={18} />
+                    Назад
+                </Link>
+                <h1 className="text-2xl font-bold text-[var(--foreground)]">Профиль университета</h1>
             </div>
 
-            {tab === "overview" && (
-                <section className="space-y-6 rounded-2xl border border-emerald-200 bg-white p-6">
-                    <div className="flex justify-end">
-                        <button
-                            onClick={handleSave}
-                            disabled={saving}
-                            className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-medium text-white disabled:opacity-70"
-                        >
-                            {saving ? "Сохранение..." : "Save Changes"}
-                        </button>
-                    </div>
-                    {status && <p className="text-sm text-emerald-700">{status}</p>}
+            <section className="card overflow-hidden p-0">
+                <div className="border-b border-[var(--border)] bg-[var(--surface-soft)] px-6 py-4 flex flex-wrap items-center justify-between gap-3">
+                    <h2 className="text-lg font-semibold text-[var(--foreground)]">Основные данные</h2>
+                    <button
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="btn-primary inline-flex items-center gap-2"
+                    >
+                        <IconDeviceFloppy size={18} />
+                        {saving ? "Сохранение…" : "Сохранить"}
+                    </button>
+                </div>
+                <div className="space-y-6 p-6">
+                    {status && (
+                        <p className={`text-sm ${status.startsWith("Сохранено") ? "text-emerald-600" : "text-red-600"}`}>
+                            {status}
+                        </p>
+                    )}
 
                     <div>
-                        <label className="mb-1 block text-sm font-medium">University Name</label>
+                        <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-[var(--foreground)]">
+                            <IconBuilding size={18} className="text-[var(--text-muted)]" />
+                            Название университета
+                        </label>
                         <input
-                            className="w-full rounded-xl border border-emerald-200 px-3 py-2"
+                            className="input w-full"
                             value={form.name ?? ""}
                             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                            placeholder="University Name"
+                            placeholder="Введите название"
                         />
                     </div>
 
-                    <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                        <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-[var(--foreground)]">
+                            <IconWorld size={18} className="text-[var(--text-muted)]" />
+                            Страна
+                        </label>
+                        <input
+                            className="input w-full"
+                            value={form.country ?? ""}
+                            onChange={(e) => setForm((f) => ({ ...f, country: e.target.value }))}
+                            placeholder="Например: Россия"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="mb-1.5 block text-sm font-medium text-[var(--foreground)]">Слоган / девиз</label>
+                        <input
+                            className="input w-full"
+                            value={form.tagline ?? ""}
+                            onChange={(e) => setForm((f) => ({ ...f, tagline: e.target.value }))}
+                            placeholder="Краткий девиз университета"
+                        />
+                    </div>
+
+                    <div className="grid gap-6 sm:grid-cols-2">
                         <div>
-                            <label className="mb-1 block text-sm font-medium">University Logo (Short)</label>
+                            <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-[var(--foreground)]">
+                                <IconCalendar size={18} className="text-[var(--text-muted)]" />
+                                Год основания
+                            </label>
+                            <input
+                                type="number"
+                                className="input w-full"
+                                value={form.yearEstablished ?? ""}
+                                onChange={(e) => setForm((f) => ({ ...f, yearEstablished: e.target.value ? parseInt(e.target.value, 10) : null }))}
+                                placeholder="например 1987"
+                            />
+                        </div>
+                        <div>
+                            <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-[var(--foreground)]">
+                                <IconUsers size={18} className="text-[var(--text-muted)]" />
+                                Количество студентов
+                            </label>
+                            <input
+                                type="number"
+                                className="input w-full"
+                                value={form.numberOfStudents ?? ""}
+                                onChange={(e) => setForm((f) => ({ ...f, numberOfStudents: e.target.value ? parseInt(e.target.value, 10) : null }))}
+                                placeholder="например 1200"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid gap-6 sm:grid-cols-2">
+                        <div>
+                            <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-[var(--foreground)]">
+                                <IconPhoto size={18} className="text-[var(--text-muted)]" />
+                                Логотип (квадратный)
+                            </label>
                             <div className="flex gap-3">
                                 {form.logoShort ? (
                                     <div
-                                        className="h-20 w-20 shrink-0 rounded-lg border bg-cover bg-center"
+                                        className="h-20 w-20 shrink-0 rounded-xl border border-[var(--border)] bg-cover bg-center"
                                         style={{ backgroundImage: `url(${form.logoShort})` }}
                                     />
                                 ) : (
-                                    <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-2xl text-emerald-400">
-                                        📷
+                                    <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] text-[var(--text-muted)]">
+                                        <IconPhoto size={28} />
                                     </div>
                                 )}
                                 <input
                                     type="file"
                                     accept="image/*"
-                                    className="flex-1 rounded-xl border border-emerald-200 px-3 py-2"
+                                    className="input flex-1 text-sm"
                                     onChange={async (e) => {
                                         const file = e.target.files?.[0];
                                         if (!file) return;
@@ -163,22 +228,22 @@ export default function UniversityProfilePage() {
                             </div>
                         </div>
                         <div>
-                            <label className="mb-1 block text-sm font-medium">University Logo (Long)</label>
+                            <label className="mb-1.5 block text-sm font-medium text-[var(--foreground)]">Логотип (широкий)</label>
                             <div className="flex gap-3">
                                 {form.logoLong ? (
                                     <div
-                                        className="h-20 w-32 shrink-0 rounded-lg border bg-contain bg-center bg-no-repeat"
+                                        className="h-20 w-32 shrink-0 rounded-xl border border-[var(--border)] bg-contain bg-center bg-no-repeat"
                                         style={{ backgroundImage: `url(${form.logoLong})` }}
                                     />
                                 ) : (
-                                    <div className="flex h-20 w-32 shrink-0 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-2xl text-emerald-400">
-                                        📷
+                                    <div className="flex h-20 w-32 shrink-0 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] text-[var(--text-muted)]">
+                                        <IconPhoto size={24} />
                                     </div>
                                 )}
                                 <input
                                     type="file"
                                     accept="image/*"
-                                    className="flex-1 rounded-xl border border-emerald-200 px-3 py-2"
+                                    className="input flex-1 text-sm"
                                     onChange={async (e) => {
                                         const file = e.target.files?.[0];
                                         if (!file) return;
@@ -192,76 +257,22 @@ export default function UniversityProfilePage() {
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-sm font-medium">Tagline / Motto</label>
-                        <input
-                            className="w-full rounded-xl border border-emerald-200 px-3 py-2"
-                            value={form.tagline ?? ""}
-                            onChange={(e) => setForm((f) => ({ ...f, tagline: e.target.value }))}
-                            placeholder="Enter your University motto"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="mb-1 block text-sm font-medium">Стандартное сообщение при отклике студенту</label>
-                        <p className="mb-2 text-xs text-gray-500">Это сообщение можно использовать при инициативе отклика к студенту (опционально)</p>
+                        <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-[var(--foreground)]">
+                            <IconMessage size={18} className="text-[var(--text-muted)]" />
+                            Стандартное сообщение при отклике студенту
+                        </label>
+                        <p className="mb-2 text-xs text-[var(--text-muted)]">
+                            Подставляется при отправке приглашения студенту в разделе Discovery (можно отредактировать перед отправкой).
+                        </p>
                         <textarea
-                            className="min-h-[100px] w-full rounded-xl border border-emerald-200 px-3 py-2"
+                            className="input min-h-[120px] w-full resize-y"
                             value={form.outreachMessage ?? ""}
                             onChange={(e) => setForm((f) => ({ ...f, outreachMessage: e.target.value }))}
-                            placeholder="Например: Здравствуйте! Мы заинтересованы вашим профилем и хотели бы обсудить возможности..."
+                            placeholder="Здравствуйте! Мы заинтересованы вашим профилем и хотели бы обсудить возможности..."
                         />
                     </div>
-
-                    <div className="grid gap-4 md:grid-cols-2">
-                        <div>
-                            <label className="mb-1 block text-sm font-medium">Year Established</label>
-                            <input
-                                type="number"
-                                className="w-full rounded-xl border border-emerald-200 px-3 py-2"
-                                value={form.yearEstablished ?? ""}
-                                onChange={(e) => setForm((f) => ({ ...f, yearEstablished: e.target.value ? parseInt(e.target.value, 10) : null }))}
-                                placeholder="e.g. 1987"
-                            />
-                        </div>
-                        <div>
-                            <label className="mb-1 block text-sm font-medium">Number of Students</label>
-                            <input
-                                type="number"
-                                className="w-full rounded-xl border border-emerald-200 px-3 py-2"
-                                value={form.numberOfStudents ?? ""}
-                                onChange={(e) => setForm((f) => ({ ...f, numberOfStudents: e.target.value ? parseInt(e.target.value, 10) : null }))}
-                                placeholder="e.g. 1200"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="flex justify-between pt-4">
-                        <button
-                            type="button"
-                            disabled
-                            className="rounded-xl border border-emerald-200 px-4 py-2 text-sm text-gray-400"
-                        >
-                            ← Previous
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setTab("media")}
-                            className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-medium text-white"
-                        >
-                            Media and Location →
-                        </button>
-                    </div>
-                </section>
-            )}
-
-            {tab !== "overview" && (
-                <section className="rounded-2xl border border-emerald-200 bg-white p-8 text-center text-gray-500">
-                    <p>Section coming soon.</p>
-                    <button onClick={() => setTab("overview")} className="mt-4 text-emerald-600 hover:underline">
-                        ← Back to Overview
-                    </button>
-                </section>
-            )}
+                </div>
+            </section>
         </div>
     );
 }

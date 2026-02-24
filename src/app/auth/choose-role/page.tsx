@@ -5,29 +5,29 @@ import Link from "next/link";
 export default function ChooseRolePage() {
     return (
         <div className="auth-page flex min-h-screen flex-col items-center justify-center px-4 py-8 sm:px-6 sm:py-10">
-            <main className="w-full max-w-2xl">
-                <h1 className="text-center text-2xl font-bold text-[var(--foreground)] sm:text-3xl">Create account</h1>
-                <p className="mt-2 text-center text-sm text-[var(--text-muted)] sm:text-base">Choose your account type to continue</p>
+            <main className="w-full max-w-xl">
+                <h1 className="text-center text-xl font-bold text-[var(--foreground)] sm:text-2xl">Create account</h1>
+                <p className="mt-1.5 text-center text-sm text-[var(--text-muted)]">Choose your account type to continue</p>
 
-                <div className="mt-8 grid gap-4 sm:mt-10 sm:grid-cols-2">
+                <div className="mx-auto mt-6 flex max-w-[200px] flex-col gap-4 sm:max-w-none sm:flex-row sm:justify-center sm:gap-5">
                     <Link
                         href="/auth/register?role=student"
-                        className="card flex flex-col items-center gap-3 p-5 transition-colors hover:border-[var(--accent)] hover:bg-[var(--surface-soft)] sm:p-6"
+                        className="card flex aspect-square w-full flex-col items-center justify-center gap-1.5 p-4 transition-colors hover:border-[var(--accent)] hover:bg-[var(--surface-soft)] sm:h-[160px] sm:w-[160px] sm:shrink-0"
                     >
-                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[var(--muted)] text-2xl sm:h-16 sm:w-16">🎓</div>
-                        <h2 className="text-lg font-semibold text-[var(--foreground)]">Student</h2>
-                        <p className="text-center text-sm text-[var(--text-muted)]">Create portfolio, apply to universities, showcase achievements</p>
-                        <span className="text-sm font-medium text-[var(--accent)]">Register as Student →</span>
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--muted)] text-xl">🎓</div>
+                        <h2 className="text-base font-semibold text-[var(--foreground)]">Student</h2>
+                        <p className="text-center text-xs leading-tight text-[var(--text-muted)]">Portfolio, applications, achievements</p>
+                        <span className="text-xs font-medium text-[var(--accent)]">Register →</span>
                     </Link>
 
                     <Link
                         href="/auth/register?role=university"
-                        className="card flex flex-col items-center gap-3 p-5 transition-colors hover:border-[var(--accent)] hover:bg-[var(--surface-soft)] sm:p-6"
+                        className="card flex aspect-square w-full flex-col items-center justify-center gap-1.5 p-4 transition-colors hover:border-[var(--accent)] hover:bg-[var(--surface-soft)] sm:h-[160px] sm:w-[160px] sm:shrink-0"
                     >
-                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[var(--muted)] text-2xl sm:h-16 sm:w-16">🏛️</div>
-                        <h2 className="text-lg font-semibold text-[var(--foreground)]">University</h2>
-                        <p className="text-center text-sm text-[var(--text-muted)]">Review applications, manage admissions, connect with students</p>
-                        <span className="text-sm font-medium text-[var(--accent)]">Register as University →</span>
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--muted)] text-xl">🏛️</div>
+                        <h2 className="text-base font-semibold text-[var(--foreground)]">University</h2>
+                        <p className="text-center text-xs leading-tight text-[var(--text-muted)]">Applications, admissions, students</p>
+                        <span className="text-xs font-medium text-[var(--accent)]">Register →</span>
                     </Link>
                 </div>
 
